@@ -1,0 +1,7 @@
+# Abstract
+
+The **AI Smart Bus Tracking and Notification System** is an intelligent web-based application designed to improve the efficiency and reliability of college transportation services. Many students experience difficulties in knowing the exact location and arrival time of college buses, resulting in unnecessary waiting and inconvenience. This project addresses these challenges by providing real-time bus tracking, accurate estimated time of arrival (ETA), and instant notifications for bus arrivals, delays, and route updates.
+
+The system uses GPS technology to monitor the live location of buses and enables students to access real-time transportation information through a simple and user-friendly interface. It also provides dedicated modules for administrators to manage buses, routes, drivers, and student information efficiently. By integrating AI-assisted ETA prediction and smart notification features, the system enhances communication between students and transport administrators while improving overall transportation management.
+
+Developed using **HTML, CSS, JavaScript, Spring Boot, MySQL, and GitHub**, the AI Smart Bus Tracking and Notification System offers a secure, scalable, and efficient solution for modern college transportation. The project aims to reduce student waiting time, improve operational efficiency, enhance passenger safety, and provide a smarter and more convenient commuting experience for educational institutions.
