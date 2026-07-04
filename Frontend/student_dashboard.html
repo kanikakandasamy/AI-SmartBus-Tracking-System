@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | SmartBus</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <i class="fa-solid fa-bus"></i>
+            <h2>SmartBus</h2>
+        </div>
+
+        <ul>
+
+            <li class="active">
+                <a href="#"><i class="fa-solid fa-house"></i> Dashboard</a>
+            </li>
+
+            <li>
+                <a href="live_tracking.html">
+                    <i class="fa-solid fa-location-dot"></i>
+                    Live Tracking
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-bus"></i>
+                    My Bus
+                </a>
+            </li>
+
+            <li>
+                <a href="notifications.html">
+                    <i class="fa-solid fa-bell"></i>
+                    Notifications
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-user"></i>
+                    My Profile
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-circle-question"></i>
+                    Help
+                </a>
+            </li>
+
+            <li>
+                <a href="login.html">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- Main Content -->
+
+    <main class="main-content">
+
+        <header>
+
+            <div>
+
+                <h1>Welcome, Student</h1>
+                <p>Student Dashboard</p>
+
+            </div>
+
+            <div class="profile">
+
+                <i class="fa-solid fa-bell"></i>
+
+                <img src="assets/images/profile.png"
+                    alt="Profile">
+
+            </div>
+
+        </header>
+
+        <!-- Cards -->
+
+        <section class="cards">
+
+            <div class="card">
+
+                <i class="fa-solid fa-bus"></i>
+
+                <h3>Assigned Bus</h3>
+
+                <p>TN 01 AB 1234</p>
+
+            </div>
+
+            <div class="card">
+
+                <i class="fa-solid fa-route"></i>
+
+                <h3>Route</h3>
+
+                <p>College → City</p>
+
+            </div>
+
+            <div class="card">
+
+                <i class="fa-solid fa-clock"></i>
+
+                <h3>ETA</h3>
+
+                <p>8 Minutes</p>
+
+            </div>
+
+            <div class="card">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+                <h3>Next Stop</h3>
+
+                <p>Main Bus Stop</p>
+
+            </div>
+
+        </section>
+
+        <!-- Live Tracking -->
+
+        <section class="tracking">
+
+            <div class="map">
+
+                <h2>Live Tracking</h2>
+
+                <img src="assets/images/map.png"
+                    alt="Map">
+
+            </div>
+
+            <div class="bus-details">
+
+                <h2>Bus Details</h2>
+
+                <table>
+
+                    <tr>
+                        <td>Bus Number</td>
+                        <td>TN 01 AB 1234</td>
+                    </tr>
+
+                    <tr>
+                        <td>Driver</td>
+                        <td>Ramesh Kumar</td>
+                    </tr>
+
+                    <tr>
+                        <td>Contact</td>
+                        <td>+91 9876543210</td>
+                    </tr>
+
+                    <tr>
+                        <td>Status</td>
+                        <td>On Route</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+        </section>
+
+        <!-- Bottom Section -->
+
+        <section class="bottom">
+
+            <div class="stops">
+
+                <h2>Upcoming Stops</h2>
+
+                <ul>
+
+                    <li>City Center</li>
+
+                    <li>Maple Street</li>
+
+                    <li>Lakeside</li>
+
+                    <li>College Gate</li>
+
+                </ul>
+
+            </div>
+
+            <div class="notifications">
+
+                <h2>Recent Notifications</h2>
+
+                <ul>
+
+                    <li>🟢 Bus will arrive in 8 minutes.</li>
+
+                    <li>🔵 Route is running on time.</li>
+
+                    <li>🟠 College holiday announced.</li>
+
+                </ul>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="js/dashboard.js"></script>
+
+</body>
+
+</html>
