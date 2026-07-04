@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard | SmartBus</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <i class="fa-solid fa-bus"></i>
+            <h2>SmartBus</h2>
+        </div>
+
+        <ul>
+            <li class="active">
+                <a href="#"><i class="fa-solid fa-house"></i> Dashboard</a>
+            </li>
+
+            <li>
+                <a href="live_tracking.html">
+                    <i class="fa-solid fa-location-dot"></i>
+                    Live Tracking
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-route"></i>
+                    Assigned Route
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-bus"></i>
+                    My Bus
+                </a>
+            </li>
+
+            <li>
+                <a href="notifications.html">
+                    <i class="fa-solid fa-bell"></i>
+                    Notifications
+                </a>
+            </li>
+
+            <li>
+                <a href="login.html">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header>
+
+            <div>
+                <h1>Welcome, Driver</h1>
+                <p>Driver Dashboard</p>
+            </div>
+
+            <div class="profile">
+                <i class="fa-solid fa-bell"></i>
+                <img src="assets/images/profile.png" alt="Driver">
+            </div>
+
+        </header>
+
+        <!-- Summary Cards -->
+        <section class="cards">
+
+            <div class="card">
+                <i class="fa-solid fa-bus"></i>
+                <h3>Assigned Bus</h3>
+                <p>TN 01 AB 1234</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-route"></i>
+                <h3>Assigned Route</h3>
+                <p>College → City</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-users"></i>
+                <h3>Students</h3>
+                <p>42</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-circle-check"></i>
+                <h3>Trip Status</h3>
+                <p>Active</p>
+            </div>
+
+        </section>
+
+        <!-- Map and Trip Control -->
+        <section class="tracking">
+
+            <div class="map">
+
+                <h2>Live Bus Location</h2>
+
+                <img src="assets/images/map.png" alt="Live Map">
+
+            </div>
+
+            <div class="bus-details">
+
+                <h2>Trip Controls</h2>
+
+                <table>
+
+                    <tr>
+                        <td>Driver Name</td>
+                        <td>Ramesh Kumar</td>
+                    </tr>
+
+                    <tr>
+                        <td>Bus Number</td>
+                        <td>TN 01 AB 1234</td>
+                    </tr>
+
+                    <tr>
+                        <td>Current Status</td>
+                        <td>On Route</td>
+                    </tr>
+
+                    <tr>
+                        <td>Current Speed</td>
+                        <td>38 km/h</td>
+                    </tr>
+
+                </table>
+
+                <br>
+
+                <button>Start Trip</button>
+                <button>Update Location</button>
+                <button>End Trip</button>
+
+            </div>
+
+        </section>
+
+        <!-- Bottom Section -->
+        <section class="bottom">
+
+            <div class="stops">
+
+                <h2>Today's Bus Stops</h2>
+
+                <ul>
+                    <li>College Gate</li>
+                    <li>Town Center</li>
+                    <li>Central Bus Stand</li>
+                    <li>City Station</li>
+                </ul>
+
+            </div>
+
+            <div class="notifications">
+
+                <h2>Driver Notifications</h2>
+
+                <ul>
+                    <li>🟢 Trip started successfully.</li>
+                    <li>🟡 Traffic reported near Town Center.</li>
+                    <li>🔵 GPS connected successfully.</li>
+                </ul>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="js/dashboard.js"></script>
+
+</body>
+
+</html>
