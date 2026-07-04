@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | SmartBus</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <i class="fa-solid fa-bus"></i>
+            <h2>SmartBus</h2>
+        </div>
+
+        <ul>
+
+            <li class="active">
+                <a href="#"><i class="fa-solid fa-house"></i> Dashboard</a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-users"></i>
+                    Manage Students
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-id-card"></i>
+                    Manage Drivers
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-bus"></i>
+                    Manage Buses
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-route"></i>
+                    Manage Routes
+                </a>
+            </li>
+
+            <li>
+                <a href="live_tracking.html">
+                    <i class="fa-solid fa-location-dot"></i>
+                    Live Tracking
+                </a>
+            </li>
+
+            <li>
+                <a href="notifications.html">
+                    <i class="fa-solid fa-bell"></i>
+                    Notifications
+                </a>
+            </li>
+
+            <li>
+                <a href="login.html">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <header>
+
+            <div>
+                <h1>Welcome, Administrator</h1>
+                <p>Transportation Management Dashboard</p>
+            </div>
+
+            <div class="profile">
+                <i class="fa-solid fa-bell"></i>
+                <img src="assets/images/profile.png" alt="Admin">
+            </div>
+
+        </header>
+
+        <!-- Dashboard Cards -->
+        <section class="cards">
+
+            <div class="card">
+                <i class="fa-solid fa-user-graduate"></i>
+                <h3>Total Students</h3>
+                <p>1,250</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-bus"></i>
+                <h3>Total Buses</h3>
+                <p>28</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-id-card"></i>
+                <h3>Total Drivers</h3>
+                <p>28</p>
+            </div>
+
+            <div class="card">
+                <i class="fa-solid fa-route"></i>
+                <h3>Active Routes</h3>
+                <p>18</p>
+            </div>
+
+        </section>
+
+        <!-- Main Dashboard -->
+        <section class="tracking">
+
+            <div class="map">
+
+                <h2>Live Fleet Tracking</h2>
+
+                <img src="assets/images/map.png" alt="Fleet Tracking">
+
+            </div>
+
+            <div class="bus-details">
+
+                <h2>System Overview</h2>
+
+                <table>
+
+                    <tr>
+                        <td>Running Buses</td>
+                        <td>24</td>
+                    </tr>
+
+                    <tr>
+                        <td>Available Buses</td>
+                        <td>4</td>
+                    </tr>
+
+                    <tr>
+                        <td>Active Drivers</td>
+                        <td>24</td>
+                    </tr>
+
+                    <tr>
+                        <td>Today's Trips</td>
+                        <td>56</td>
+                    </tr>
+
+                </table>
+
+                <br>
+
+                <button>Add Bus</button>
+                <button>Add Route</button>
+                <button>Send Notification</button>
+
+            </div>
+
+        </section>
+
+        <!-- Bottom Section -->
+        <section class="bottom">
+
+            <div class="stops">
+
+                <h2>Recent Activities</h2>
+
+                <ul>
+                    <li>🟢 New student registered.</li>
+                    <li>🟢 Route 5 updated.</li>
+                    <li>🟡 Driver assigned to Bus TN01AB1234.</li>
+                    <li>🔵 Bus TN02CD5678 completed today's trip.</li>
+                </ul>
+
+            </div>
+
+            <div class="notifications">
+
+                <h2>System Alerts</h2>
+
+                <ul>
+                    <li>🟢 All buses are operating normally.</li>
+                    <li>🟠 Route 8 experiencing traffic delay.</li>
+                    <li>🔴 Bus TN03EF4321 requires maintenance.</li>
+                </ul>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
