@@ -1,0 +1,191 @@
+/*=========================================
+ AI Smart Bus Tracking System
+ Tracking CSS
+==========================================*/
+
+/* Page Title */
+header h1{
+    color:#0f172a;
+}
+
+/* Map Container */
+.map{
+    position:relative;
+    overflow:hidden;
+}
+
+.map img{
+    width:100%;
+    height:500px;
+    object-fit:cover;
+    border-radius:12px;
+    transition:0.4s;
+}
+
+.map img:hover{
+    transform:scale(1.02);
+}
+
+/* Live Status Badge */
+.status-badge{
+    display:inline-block;
+    padding:8px 16px;
+    border-radius:20px;
+    background:#22c55e;
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    margin-top:10px;
+}
+
+/* Bus Information */
+.bus-details{
+    line-height:1.8;
+}
+
+.bus-details h2{
+    margin-bottom:15px;
+}
+
+.bus-details table td{
+    padding:12px 5px;
+}
+
+/* Buttons */
+
+.bus-details button{
+    margin-top:12px;
+}
+
+.bus-details button:first-of-type{
+    background:#2563eb;
+}
+
+.bus-details button:first-of-type:hover{
+    background:#1d4ed8;
+}
+
+.bus-details button:last-of-type{
+    background:#ef4444;
+}
+
+.bus-details button:last-of-type:hover{
+    background:#dc2626;
+}
+
+/* Route Stops */
+
+.stops ul li{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:500;
+}
+
+/* Notifications */
+
+.notification-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background:#ffffff;
+    border-left:5px solid #2563eb;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    box-shadow:0 5px 12px rgba(0,0,0,0.05);
+}
+
+.notification-item strong{
+    color:#0f172a;
+}
+
+.notification-item:hover{
+    transform:translateX(5px);
+    transition:.3s;
+}
+
+/* Status Colors */
+
+.online{
+    color:#16a34a;
+    font-weight:600;
+}
+
+.warning{
+    color:#f59e0b;
+    font-weight:600;
+}
+
+.offline{
+    color:#dc2626;
+    font-weight:600;
+}
+
+/* Map Animation */
+
+@keyframes pulse{
+
+    0%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.08);
+    }
+
+    100%{
+        transform:scale(1);
+    }
+
+}
+
+.live-icon{
+    color:#ef4444;
+    animation:pulse 1.5s infinite;
+}
+
+/* Responsive */
+
+@media(max-width:992px){
+
+.map img{
+
+    height:400px;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.map img{
+
+    height:300px;
+
+}
+
+.notification-item{
+
+    flex-direction:column;
+
+}
+
+}
+
+@media(max-width:576px){
+
+.status-badge{
+
+    font-size:12px;
+    padding:6px 12px;
+
+}
+
+.bus-details table td{
+
+    font-size:14px;
+
+}
+
+}
