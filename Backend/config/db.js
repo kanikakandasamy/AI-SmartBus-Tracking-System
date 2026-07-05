@@ -1,37 +1,31 @@
 // ============================================
 // AI Smart Bus Tracking and Notification System
-// Database Configuration
+// Database Connection
 // config/db.js
 // ============================================
 
 const mysql = require("mysql2");
-const dotenv = require("dotenv");
 
-// Load Environment Variables
-dotenv.config();
-
-// Create Database Connection
+// Create MySQL Connection
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
 });
 
-// Connect to MySQL Database
+// Connect to Database
 db.connect((err) => {
 
     if (err) {
-
-        console.error("Database Connection Failed!");
-        console.error(err.message);
+        console.error("❌ Database Connection Failed:", err.message);
         return;
-
     }
 
-    console.log("MySQL Database Connected Successfully.");
+    console.log("✅ MySQL Database Connected Successfully");
 
 });
 
-// Export Database Connection
+// Export Connection
 module.exports = db;
