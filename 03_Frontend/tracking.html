@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Fleet Tracking & Telemetry | AI Smart Bus</title>
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .leaflet-popup-content-wrapper {
+            border-radius: var(--radius-md);
+            padding: 4px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .bus-marker-icon {
+            background: #4f46e5;
+            color: white;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
+            transition: all 0.4s ease;
+        }
+        .bus-radar {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border: 2px solid rgba(79, 70, 229, 0.5);
+            border-radius: 50%;
+            animation: radarPulse 2s infinite ease-out;
+            pointer-events: none;
+            top: -15px;
+            left: -15px;
+        }
+        @keyframes radarPulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🚍</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Live GPS</span></h1>
+                <p>AI Fleet Telemetry</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Student</a>
+            <a href="tracking.html" class="active">Live Tracking</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="notification.html">Alerts</a>
+            <a href="adminDashboard.html">Admin</a>
+            <a href="driver.html">Driver</a>
+        </nav>
+
+        <div class="nav-actions">
+            <span class="live-badge">
+                <span class="pulse-dot"></span> Real-Time Connected
+            </span>
+            <button class="btn-sos" onclick="triggerEmergencySOS(selectedBusId)">
+                🚨 SOS Alert
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Header & Quick Controls -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>📍 Real-Time Fleet Radar & Map</h2>
+                <p>Track live bus coordinates, speeds, upcoming stops, and AI-predicted arrival times.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-sm" id="btnToggleSimulate" onclick="toggleAutoSimulate()">
+                    ▶ Start Live Simulation
+                </button>
+                <button class="btn btn-sm" onclick="stepSimulation()">
+                    ⚡ Step GPS (1-Click)
+                </button>
+            </div>
+        </div>
+
+        <!-- Tracking Layout: Interactive Map + Telemetry Sidebar -->
+        <div class="tracking-layout">
+            <!-- Map Container -->
+            <div class="map-wrapper">
+                <!-- Floating HUD Over Map -->
+                <div class="map-floating-hud">
+                    <div class="map-hud-pill">
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Selected Bus</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #38bdf8;" id="hudBusName">BUS-101 (Alpha)</div>
+                        </div>
+                    </div>
+
+                    <div class="map-hud-pill">
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Live Speed</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #34d399;" id="hudSpeed">36.5 km/h</div>
+                        </div>
+                        <div style="border-left: 1px solid rgba(255,255,255,0.15); height: 24px; margin: 0 4px;"></div>
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">AI ETA</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #fbbf24;" id="hudETA">9 mins</div>
+                        </div>
+                    </div>
+
+                    <div class="map-hud-pill">
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Traffic Condition</div>
+                            <div id="hudTraffic" class="badge badge-warning">Moderate Traffic</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaflet Interactive Map -->
+                <div id="map"></div>
+
+                <!-- Map Action Controls Overlay -->
+                <div class="map-controls-floating">
+                    <button class="map-btn" onclick="centerOnBus()">🎯 Center Bus</button>
+                    <button class="map-btn" onclick="fitFullRoute()">🛣️ View Full Route</button>
+                    <button class="map-btn" onclick="refreshTrackingData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <!-- Telemetry & Stop Timeline Sidebar -->
+            <div class="telemetry-sidebar">
+                <!-- Bus Selector -->
+                <div class="bus-selector-card">
+                    <div class="stat-title">Select Fleet Vehicle</div>
+                    <div class="bus-chips" id="busChipsContainer">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Live Metrics Card -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="stat-header">
+                        <span class="stat-title">Vehicle Diagnostics</span>
+                        <span class="badge badge-success" id="sidebarStatus">On Route</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Assigned Driver</div>
+                            <div style="font-weight: 700; font-size: 14px;" id="sidebarDriver">Rajesh Kumar</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Driver Contact</div>
+                            <div style="font-weight: 700; font-size: 14px;" id="sidebarDriverPhone">+91 98451 23456</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Route</div>
+                            <div style="font-weight: 700; font-size: 14px;" id="sidebarRoute">North Express</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Distance Remaining</div>
+                            <div style="font-weight: 700; font-size: 14px;" id="sidebarDistance">4.8 km</div>
+                        </div>
+                    </div>
+
+                    <!-- Occupancy Bar -->
+                    <div style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                            <span>Passenger Occupancy</span>
+                            <strong id="occupancyText">36 / 50 Seats (72%)</strong>
+                        </div>
+                        <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="occupancyBar" style="background: var(--primary); width: 72%; height: 100%; transition: width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Route Waypoints Timeline -->
+                <div class="timeline-card">
+                    <div class="card-title" style="margin-bottom: 0;">
+                        <span>Route Stops & ETA</span>
+                        <span style="font-size: 12px; font-weight: 500; color: var(--primary);" id="totalStopsCount">6 Stops</span>
+                    </div>
+                    <div class="timeline" id="stopsTimeline">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telemetry Data Table Section -->
+        <div class="card">
+            <div class="card-title">
+                <span>📋 Fleet Live Telemetry Feed</span>
+                <span class="live-badge"><span class="pulse-dot"></span> Live Sync</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Status</th>
+                            <th>Driver</th>
+                            <th>Coordinates</th>
+                            <th>Speed</th>
+                            <th>Traffic Status</th>
+                            <th>Next Stop</th>
+                            <th>AI ETA</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trackingTableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted);">Loading live tracking stream...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="dashboard.html">Student Portal</a>
+            <a href="driver.html">Driver Console</a>
+            <a href="adminDashboard.html">Admin Command</a>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS & App Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/tracking.js"></script>
+</body>
+</html>

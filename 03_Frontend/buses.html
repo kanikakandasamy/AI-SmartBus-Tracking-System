@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Bus Management | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🚍</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Fleet Manager</span></h1>
+                <p>Vehicles & Capacity Control</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="adminDashboard.html">Dashboard</a>
+            <a href="buses.html" class="active">Buses</a>
+            <a href="drivers.html">Drivers</a>
+            <a href="students.html">Students</a>
+            <a href="routes.html">Routes</a>
+            <a href="allocation.html">Allocations</a>
+            <a href="tracking.html">Tracking</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn btn-sm" onclick="openAddModal()">
+                ➕ Add New Bus
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>🚌 Fleet Vehicles Directory</h2>
+                <p>Register, inspect, and update college transit buses and seating capacities.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="busSearchInput" placeholder="🔍 Search bus number..." class="form-control" style="width: 240px;" oninput="filterBuses()">
+                <button class="btn btn-secondary btn-sm" onclick="loadBuses()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Bus List Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Fleet Roster</span>
+                <span class="badge badge-info" id="busCountBadge">4 Vehicles</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Bus Number</th>
+                            <th>Assigned Driver</th>
+                            <th>Seating Capacity</th>
+                            <th>Occupancy</th>
+                            <th>Vehicle Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="busTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading fleet buses...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Bus Modal -->
+    <div id="busModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;" id="modalTitle">Add New Bus</h3>
+
+            <input type="hidden" id="editBusId">
+
+            <div class="form-group">
+                <label>Bus Number / Name</label>
+                <input type="text" id="busNumber" placeholder="e.g. BUS-105 (Echo)" class="form-control" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Seating Capacity</label>
+                    <input type="number" id="capacity" value="50" min="10" max="80" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Current Occupancy</label>
+                    <input type="number" id="currentOccupancy" value="0" min="0" max="80" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Operational Status</label>
+                <select id="busStatus" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Standby">Standby</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="saveBus()">Save Bus</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="adminDashboard.html">Admin Hub</a>
+            <a href="tracking.html">Live Map</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        let allBuses = [];
+
+        async function loadBuses() {
+            const res = await SmartBusAPI.getBuses();
+            if (res.success && res.data) {
+                allBuses = res.data;
+                renderBuses(allBuses);
+            }
+        }
+
+        function renderBuses(list) {
+            document.getElementById("busCountBadge").innerText = `${list.length} Vehicles`;
+            const tbody = document.getElementById("busTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No buses found</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(b => {
+                const occ = b.current_occupancy || 0;
+                const cap = b.capacity || 50;
+                const pct = Math.round((occ / cap) * 100);
+
+                return `
+                    <tr>
+                        <td><strong>#${b.id}</strong></td>
+                        <td><strong>🚍 ${b.bus_number}</strong></td>
+                        <td>${b.driver_name || '<span style="color:var(--text-muted)">Unassigned</span>'}</td>
+                        <td>${cap} Seats</td>
+                        <td style="min-width: 130px;">
+                            <div style="font-size: 12px; margin-bottom: 3px;">${occ} / ${cap} (${pct}%)</div>
+                            <div style="background:#e2e8f0; height:6px; border-radius:3px; overflow:hidden;">
+                                <div style="background:${pct > 80 ? 'var(--danger)' : 'var(--primary)'}; width:${pct}%; height:100%;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${b.status === 'Active' ? 'badge-success' : b.status === 'Standby' ? 'badge-warning' : 'badge-danger'}">
+                                ${b.status || 'Active'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="openEditModal(${b.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBus(${b.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        function filterBuses() {
+            const query = document.getElementById("busSearchInput").value.toLowerCase();
+            const filtered = allBuses.filter(b => b.bus_number.toLowerCase().includes(query));
+            renderBuses(filtered);
+        }
+
+        function openAddModal() {
+            document.getElementById("editBusId").value = "";
+            document.getElementById("busNumber").value = "";
+            document.getElementById("capacity").value = "50";
+            document.getElementById("currentOccupancy").value = "0";
+            document.getElementById("busStatus").value = "Active";
+            document.getElementById("modalTitle").innerText = "Add New Fleet Bus";
+            document.getElementById("busModal").classList.add("active");
+        }
+
+        function openEditModal(id) {
+            const bus = allBuses.find(b => b.id === id);
+            if (!bus) return;
+
+            document.getElementById("editBusId").value = bus.id;
+            document.getElementById("busNumber").value = bus.bus_number;
+            document.getElementById("capacity").value = bus.capacity;
+            document.getElementById("currentOccupancy").value = bus.current_occupancy || 0;
+            document.getElementById("busStatus").value = bus.status || "Active";
+            document.getElementById("modalTitle").innerText = `Edit Bus #${bus.id}`;
+            document.getElementById("busModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("busModal").classList.remove("active");
+        }
+
+        async function saveBus() {
+            const id = document.getElementById("editBusId").value;
+            const bus_number = document.getElementById("busNumber").value.trim();
+            const capacity = parseInt(document.getElementById("capacity").value);
+            const current_occupancy = parseInt(document.getElementById("currentOccupancy").value);
+            const status = document.getElementById("busStatus").value;
+
+            if (!bus_number) {
+                Toast.show("Validation", "Please enter a bus number.", "warning");
+                return;
+            }
+
+            const payload = { bus_number, capacity, current_occupancy, status };
+            const res = await SmartBusAPI.saveBus(payload, id || null);
+
+            if (res.success) {
+                Toast.show("Success", id ? "Bus updated successfully." : "New bus added.", "success");
+                closeModal();
+                loadBuses();
+            } else {
+                Toast.show("Error", res.message || "Failed to save bus.", "danger");
+            }
+        }
+
+        async function deleteBus(id) {
+            if (!confirm(`Are you sure you want to delete Bus #${id}?`)) return;
+
+            const res = await SmartBusAPI.deleteBus(id);
+            if (res.success) {
+                Toast.show("Deleted", "Bus removed from fleet.", "info");
+                loadBuses();
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadBuses);
+    </script>
+</body>
+</html>

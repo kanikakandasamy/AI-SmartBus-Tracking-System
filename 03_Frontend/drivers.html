@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Registry | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">👨‍✈️</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Drivers Hub</span></h1>
+                <p>Crew & Licensing Directory</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="adminDashboard.html">Dashboard</a>
+            <a href="buses.html">Buses</a>
+            <a href="drivers.html" class="active">Drivers</a>
+            <a href="students.html">Students</a>
+            <a href="routes.html">Routes</a>
+            <a href="allocation.html">Allocations</a>
+            <a href="tracking.html">Tracking</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn btn-sm" onclick="openAddModal()">
+                ➕ Add New Driver
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>👨‍✈️ Transit Drivers Registry</h2>
+                <p>Manage licensed drivers, contact credentials, and assigned vehicle schedules.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="driverSearchInput" placeholder="🔍 Search driver name..." class="form-control" style="width: 240px;" oninput="filterDrivers()">
+                <button class="btn btn-secondary btn-sm" onclick="loadDrivers()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Driver Table Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Certified Drivers List</span>
+                <span class="badge badge-info" id="driverCountBadge">4 Drivers</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Driver Name</th>
+                            <th>Phone Contact</th>
+                            <th>License No.</th>
+                            <th>Email Login</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="driverTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading drivers...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Driver Modal -->
+    <div id="driverModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;" id="modalTitle">Add New Driver</h3>
+
+            <input type="hidden" id="editDriverId">
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="driverNameInput" placeholder="e.g. Rajesh Kumar" class="form-control" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="driverPhone" placeholder="+91 98451 23456" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Commercial License No.</label>
+                    <input type="text" id="driverLicense" placeholder="DL-TN-02-2020-001" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="driverEmail" placeholder="driver@smartbus.com" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Portal Password</label>
+                    <input type="password" id="driverPassword" placeholder="••••••••" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Duty Status</label>
+                <select id="driverStatus" class="form-control">
+                    <option value="On Duty">On Duty</option>
+                    <option value="Available" selected>Available</option>
+                    <option value="Off Duty">Off Duty</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="saveDriver()">Save Driver</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="adminDashboard.html">Admin Hub</a>
+            <a href="driver.html">Driver Console</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        let allDrivers = [];
+
+        async function loadDrivers() {
+            const res = await SmartBusAPI.getDrivers();
+            if (res.success && res.data) {
+                allDrivers = res.data;
+                renderDrivers(allDrivers);
+            }
+        }
+
+        function renderDrivers(list) {
+            document.getElementById("driverCountBadge").innerText = `${list.length} Drivers`;
+            const tbody = document.getElementById("driverTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No drivers registered</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(d => `
+                <tr>
+                    <td><strong>#${d.id}</strong></td>
+                    <td><strong>👨‍✈️ ${d.name}</strong></td>
+                    <td>${d.phone}</td>
+                    <td><code>${d.license_no}</code></td>
+                    <td>${d.email}</td>
+                    <td>
+                        <span class="badge ${d.status === 'On Duty' ? 'badge-success' : d.status === 'Available' ? 'badge-info' : 'badge-warning'}">
+                            ${d.status || 'Available'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="openEditModal(${d.id})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDriver(${d.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function filterDrivers() {
+            const q = document.getElementById("driverSearchInput").value.toLowerCase();
+            const filtered = allDrivers.filter(d => d.name.toLowerCase().includes(q) || d.email.toLowerCase().includes(q));
+            renderDrivers(filtered);
+        }
+
+        function openAddModal() {
+            document.getElementById("editDriverId").value = "";
+            document.getElementById("driverNameInput").value = "";
+            document.getElementById("driverPhone").value = "";
+            document.getElementById("driverLicense").value = "";
+            document.getElementById("driverEmail").value = "";
+            document.getElementById("driverPassword").value = "driver123";
+            document.getElementById("driverStatus").value = "Available";
+            document.getElementById("modalTitle").innerText = "Register New Driver";
+            document.getElementById("driverModal").classList.add("active");
+        }
+
+        function openEditModal(id) {
+            const driver = allDrivers.find(d => d.id === id);
+            if (!driver) return;
+
+            document.getElementById("editDriverId").value = driver.id;
+            document.getElementById("driverNameInput").value = driver.name;
+            document.getElementById("driverPhone").value = driver.phone;
+            document.getElementById("driverLicense").value = driver.license_no;
+            document.getElementById("driverEmail").value = driver.email;
+            document.getElementById("driverPassword").value = driver.password || "driver123";
+            document.getElementById("driverStatus").value = driver.status || "Available";
+            document.getElementById("modalTitle").innerText = `Edit Driver: ${driver.name}`;
+            document.getElementById("driverModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("driverModal").classList.remove("active");
+        }
+
+        async function saveDriver() {
+            const id = document.getElementById("editDriverId").value;
+            const name = document.getElementById("driverNameInput").value.trim();
+            const phone = document.getElementById("driverPhone").value.trim();
+            const license_no = document.getElementById("driverLicense").value.trim();
+            const email = document.getElementById("driverEmail").value.trim();
+            const password = document.getElementById("driverPassword").value.trim();
+            const status = document.getElementById("driverStatus").value;
+
+            if (!name || !email) {
+                Toast.show("Validation", "Name and email are required.", "warning");
+                return;
+            }
+
+            const payload = { name, phone, license_no, email, password, status };
+            const res = await SmartBusAPI.saveDriver(payload, id || null);
+
+            if (res.success) {
+                Toast.show("Success", id ? "Driver profile updated." : "New driver added.", "success");
+                closeModal();
+                loadDrivers();
+            } else {
+                Toast.show("Error", res.message || "Operation failed.", "danger");
+            }
+        }
+
+        async function deleteDriver(id) {
+            if (!confirm(`Are you sure you want to delete Driver #${id}?`)) return;
+
+            const res = await SmartBusAPI.deleteDriver(id);
+            if (res.success) {
+                Toast.show("Deleted", "Driver removed.", "info");
+                loadDrivers();
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadDrivers);
+    </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Fleet Allocation | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">📋</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Allocations</span></h1>
+                <p>Bus, Driver & Route Dispatch</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="adminDashboard.html">Dashboard</a>
+            <a href="buses.html">Buses</a>
+            <a href="drivers.html">Drivers</a>
+            <a href="students.html">Students</a>
+            <a href="routes.html">Routes</a>
+            <a href="allocation.html" class="active">Allocations</a>
+            <a href="tracking.html">Tracking</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <span class="live-badge">
+                <span class="pulse-dot"></span> Dispatch Active
+            </span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>📋 Fleet Dispatch & Resource Allocations</h2>
+                <p>Pair active transit buses with certified drivers and assigned route schedules.</p>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" onclick="loadAllData()">🔄 Refresh</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Allocation Form Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>➕ New Dispatch Pairing</span>
+                </div>
+                <div class="card-subtitle">Select resources to bind together</div>
+
+                <div class="form-group">
+                    <label>Select Fleet Bus</label>
+                    <select id="allocBus" class="form-control"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Assign Certified Driver</label>
+                    <select id="allocDriver" class="form-control"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Assign Transit Route</label>
+                    <select id="allocRoute" class="form-control"></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Shift Timing</label>
+                    <select id="allocShift" class="form-control">
+                        <option value="Morning Shift (07:00 - 11:00)">Morning Shift (07:00 - 11:00)</option>
+                        <option value="Evening Shift (15:30 - 19:30)">Evening Shift (15:30 - 19:30)</option>
+                        <option value="Full Day Transit">Full Day Transit</option>
+                    </select>
+                </div>
+
+                <button class="btn" style="width: 100%; margin-top: 10px;" onclick="saveAllocation()">
+                    Confirm Allocation
+                </button>
+            </div>
+
+            <!-- Allocations List Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Active Shift Allocations</span>
+                    <span class="badge badge-success" id="allocCountBadge">3 Active</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Dispatch ID</th>
+                                <th>Vehicle Number</th>
+                                <th>Assigned Driver</th>
+                                <th>Route Corridor</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allocTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading dispatch allocations...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="adminDashboard.html">Admin Hub</a>
+            <a href="tracking.html">Live Map</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        async function loadAllData() {
+            const [busRes, driverRes, routeRes, allocRes] = await Promise.all([
+                SmartBusAPI.getBuses(),
+                SmartBusAPI.getDrivers(),
+                SmartBusAPI.getRoutes(),
+                SmartBusAPI.getAllocations()
+            ]);
+
+            // Populate Buses Dropdown
+            if (busRes.success && busRes.data) {
+                document.getElementById("allocBus").innerHTML = busRes.data.map(b =>
+                    `<option value="${b.id}">🚍 ${b.bus_number} (${b.capacity} Seats)</option>`
+                ).join("");
+            }
+
+            // Populate Drivers Dropdown
+            if (driverRes.success && driverRes.data) {
+                document.getElementById("allocDriver").innerHTML = driverRes.data.map(d =>
+                    `<option value="${d.id}">👨‍✈️ ${d.name} (${d.phone})</option>`
+                ).join("");
+            }
+
+            // Populate Routes Dropdown
+            if (routeRes.success && routeRes.data) {
+                document.getElementById("allocRoute").innerHTML = routeRes.data.map(r =>
+                    `<option value="${r.id}">🛣️ ${r.route_name}</option>`
+                ).join("");
+            }
+
+            // Populate Allocations Table
+            if (allocRes.success && allocRes.data) {
+                renderAllocations(allocRes.data);
+            }
+        }
+
+        function renderAllocations(list) {
+            document.getElementById("allocCountBadge").innerText = `${list.length} Active`;
+            const tbody = document.getElementById("allocTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No active allocations.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(a => `
+                <tr>
+                    <td><strong>#DISP-${a.id}</strong></td>
+                    <td><strong>🚍 ${a.bus_number}</strong></td>
+                    <td>👨‍✈️ ${a.driver_name}</td>
+                    <td><span class="badge badge-purple">🛣️ ${a.route_name}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAllocation(${a.id})">Release</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        async function saveAllocation() {
+            const bus_id = parseInt(document.getElementById("allocBus").value);
+            const driver_id = parseInt(document.getElementById("allocDriver").value);
+            const route_id = parseInt(document.getElementById("allocRoute").value);
+
+            if (!bus_id || !driver_id || !route_id) {
+                Toast.show("Validation", "Please select bus, driver, and route.", "warning");
+                return;
+            }
+
+            const res = await SmartBusAPI.saveAllocation({ bus_id, driver_id, route_id });
+            if (res.success) {
+                Toast.show("Allocation Dispatched", "Bus, driver, and route successfully linked.", "success");
+                loadAllData();
+            } else {
+                Toast.show("Error", res.message || "Failed to save allocation.", "danger");
+            }
+        }
+
+        async function deleteAllocation(id) {
+            if (!confirm(`Release dispatch allocation #${id}?`)) return;
+
+            const res = await SmartBusAPI.deleteAllocation(id);
+            if (res.success) {
+                Toast.show("Released", "Allocation revoked.", "info");
+                loadAllData();
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadAllData);
+    </script>
+</body>
+</html>

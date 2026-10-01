@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Transit Dashboard | AI Smart Bus</title>
+    <!-- Leaflet CSS for student mini-map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .student-hero-card {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .proximity-alert-banner {
+            display: none;
+            background: #ecfdf5;
+            border: 2px solid #10b981;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            animation: pulseGlow 2s infinite;
+        }
+        .proximity-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: #065f46;
+        }
+        #studentMiniMap {
+            height: 320px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🎓</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Student Portal</span></h1>
+                <p>Personalized Transit Tracker</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="dashboard.html" class="active">My Bus</a>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="notification.html">Alerts</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <span class="live-badge">
+                <span class="pulse-dot"></span> Bus In Transit
+            </span>
+            <button class="btn-sos" onclick="triggerEmergencySOS(studentBusId)">
+                🚨 SOS Alert
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Proximity Geofence Alert Banner -->
+        <div id="proximityBanner" class="proximity-alert-banner">
+            <div class="proximity-content">
+                <div style="font-size: 32px;">🚏</div>
+                <div>
+                    <h4 style="font-size: 16px; font-weight: 800;">PROXIMITY ALERT: YOUR BUS IS APPROACHING!</h4>
+                    <p style="font-size: 14px;" id="proximityMessage">
+                        BUS-101 is approximately 1.5 km away from Anna Nagar East. Please proceed to the boarding area.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Hero Banner -->
+        <div class="student-hero-card">
+            <div>
+                <span class="badge badge-purple" style="margin-bottom: 12px; background: rgba(255,255,255,0.2); color: white; border: none;">
+                    Student Profile Verified
+                </span>
+                <h2 style="font-size: 28px; font-weight: 800;" id="studentWelcome">Welcome, Kanika Kandasamy</h2>
+                <p style="color: #e0e7ff; font-size: 14px; margin-top: 4px;">
+                    Assigned Bus: <strong id="studentBusName">BUS-101 (Alpha)</strong> • Boarding Stop: <strong id="studentStopName">Anna Nagar East</strong>
+                </p>
+
+                <div style="display: flex; gap: 18px; margin-top: 20px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; color: #cbd5e1;">Assigned Driver</div>
+                        <div style="font-weight: 700; font-size: 14px;" id="studentDriverName">Rajesh Kumar (+91 98451 23456)</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; color: #cbd5e1;">Route</div>
+                        <div style="font-weight: 700; font-size: 14px;" id="studentRouteName">North Express</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; color: #cbd5e1;">Traffic Level</div>
+                        <div style="font-weight: 700; font-size: 14px;" id="studentTraffic">Moderate Traffic</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big Live Countdown Box -->
+            <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 24px 36px; border-radius: var(--radius-md); text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #e0e7ff;">Arrival at your stop</div>
+                <div style="font-size: 46px; font-weight: 800; color: #ffffff; line-height: 1.1;" id="studentETACountdown">9 mins</div>
+                <div style="font-size: 14px; font-weight: 600; color: #fef08a;" id="studentArrivalClock">~ 03:45 PM</div>
+            </div>
+        </div>
+
+        <!-- 3 Feature Widgets: Live Telemetry + Occupancy + Live Mini Map -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Bus Live Speed</span>
+                    <div class="stat-icon emerald">⚡</div>
+                </div>
+                <div class="stat-value" id="cardSpeed">36.5 km/h</div>
+                <div class="stat-meta positive">
+                    <span>Smooth GPS Transmission</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Remaining Distance</span>
+                    <div class="stat-icon sky">📏</div>
+                </div>
+                <div class="stat-value" id="cardDistance">4.8 km</div>
+                <div class="stat-meta">
+                    <span id="cardNextStop">Next Stop: Anna Nagar</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Seat Availability</span>
+                    <div class="stat-icon purple">💺</div>
+                </div>
+                <div class="stat-value" id="cardOccupancy">14 Seats</div>
+                <div class="stat-meta">
+                    <span id="cardOccupancyDetail">36 / 50 Filled (72%)</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Trip Schedule</span>
+                    <div class="stat-icon amber">⏱️</div>
+                </div>
+                <div class="stat-value" id="cardSchedule">On Time</div>
+                <div class="stat-meta positive">
+                    <span>96% AI Confidence</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Bus Mini-Map & Upcoming Stops -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div class="card" style="margin-bottom: 0;">
+                <div class="card-title">
+                    <span>🗺️ Live Mini-Radar (Your Bus & Stop)</span>
+                    <a href="tracking.html" class="btn btn-sm">Full Screen Map</a>
+                </div>
+                <div id="studentMiniMap"></div>
+            </div>
+
+            <div class="card" style="margin-bottom: 0;">
+                <div class="card-title">
+                    <span>🔔 Recent Bus Alerts</span>
+                </div>
+                <div id="studentAlertsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Alerts populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="notification.html">Notifications</a>
+        </div>
+    </footer>
+
+    <!-- Leaflet & App Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/studentDashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Predictive ETA Intelligence | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .eta-hero-card {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 28px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        .eta-clock-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px 36px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+        .eta-big-number {
+            font-size: 48px;
+            font-weight: 800;
+            color: #38bdf8;
+            line-height: 1;
+        }
+        .eta-clock-label {
+            font-size: 13px;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .sim-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 860px) {
+            .sim-grid { grid-template-columns: 1fr; }
+        }
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .slider-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🤖</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">AI ETA</span></h1>
+                <p>Multi-Factor Predictive Intelligence</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Student</a>
+            <a href="tracking.html">Live Tracking</a>
+            <a href="eta.html" class="active">AI ETA</a>
+            <a href="notification.html">Alerts</a>
+            <a href="adminDashboard.html">Admin</a>
+            <a href="driver.html">Driver</a>
+        </nav>
+
+        <div class="nav-actions">
+            <span class="live-badge">
+                <span class="pulse-dot"></span> AI Engine Online
+            </span>
+            <button class="btn-sos" onclick="triggerEmergencySOS(1)">
+                🚨 SOS Alert
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>⚡ Advanced AI-Driven Arrival Prediction</h2>
+                <p>Combines Geodesic Haversine routing, live traffic speed coefficients, rush-hour analysis, and stop dwell times.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <select id="selectBusETA" class="form-control" style="width: auto; min-width: 180px;" onchange="onBusSelectionChange()">
+                    <!-- Options populated by JS -->
+                </select>
+                <button class="btn btn-secondary btn-sm" onclick="loadETAPredictions()">
+                    🔄 Refresh ETA
+                </button>
+            </div>
+        </div>
+
+        <!-- Featured Big ETA Hero Banner -->
+        <div class="eta-hero-card">
+            <div>
+                <span class="badge badge-purple" style="margin-bottom: 12px;">AI Model: Haversine-MultiFactor-V2.4</span>
+                <h3 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;" id="heroBusTitle">BUS-101 (Alpha) — North Express</h3>
+                <p style="color: #cbd5e1; max-width: 520px; font-size: 14px;" id="heroBusRoute">
+                    Routing from Central Station to Engineering Campus Main Gate.
+                </p>
+
+                <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 12px; color: #94a3b8;">Traffic Condition</div>
+                        <strong style="color: #38bdf8;" id="heroTrafficLevel">Moderate Traffic (1.20x)</strong>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #94a3b8;">Confidence Score</div>
+                        <strong style="color: #34d399;" id="heroConfidence">96% High Precision</strong>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #94a3b8;">Distance Remaining</div>
+                        <strong style="color: #fbbf24;" id="heroDistance">4.8 km</strong>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #94a3b8;">Next Stop</div>
+                        <strong style="color: #ffffff;" id="heroNextStop">Anna Nagar East</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="eta-clock-box">
+                <div class="eta-big-number" id="heroETAMinutes">9</div>
+                <div class="eta-clock-label">Minutes Remaining</div>
+                <div style="margin-top: 10px; font-size: 16px; font-weight: 700; color: #ffffff;" id="heroClockTime">
+                    Arrives ~ 03:45 PM
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Factor Simulation & Breakdown Layout -->
+        <div class="sim-grid">
+            <!-- Factor 1: AI Parameters Breakdown -->
+            <div class="card">
+                <div class="card-title">
+                    <span>🔬 Mathematical Prediction Factors</span>
+                </div>
+                <div class="card-subtitle">How the AI engine computes this exact arrival time</div>
+
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="background: #f8fafc; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>1. Geodesic Path Distance</strong>
+                            <div style="font-size: 12px; color: var(--text-muted);">Exact coordinate haversine formula along road waypoints</div>
+                        </div>
+                        <span class="badge badge-info" id="factorDistance">4.8 km</span>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>2. Traffic Congestion Multiplier (TCI)</strong>
+                            <div style="font-size: 12px; color: var(--text-muted);">Speed threshold index + rush hour window weighting</div>
+                        </div>
+                        <span class="badge badge-warning" id="factorTraffic">1.20x Multiplier</span>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>3. Intermediate Stop Dwell Time</strong>
+                            <div style="font-size: 12px; color: var(--text-muted);">Estimated 1.5 mins per passenger onboarding/offboarding stop</div>
+                        </div>
+                        <span class="badge badge-purple" id="factorDwell">+3.0 mins</span>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>4. Speed Smoothing & Signal Halt Buffer</strong>
+                            <div style="font-size: 12px; color: var(--text-muted);">Moving historical average prevents division-by-zero during red lights</div>
+                        </div>
+                        <span class="badge badge-success" id="factorSpeed">26 km/h Avg</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Factor 2: Interactive "What-If" Scenario Simulator -->
+            <div class="card">
+                <div class="card-title">
+                    <span>🧪 Interactive What-If Scenario Simulator</span>
+                </div>
+                <div class="card-subtitle">Test how traffic changes or speed variations impact predicted ETA</div>
+
+                <div>
+                    <div class="form-group">
+                        <label>Distance Remaining: <strong id="valDist">6.5 km</strong></label>
+                        <div class="slider-control">
+                            <input type="range" id="simDist" min="1" max="25" step="0.5" value="6.5" oninput="runInteractiveSimulation()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Moving Speed: <strong id="valSpeed">32 km/h</strong></label>
+                        <div class="slider-control">
+                            <input type="range" id="simSpeed" min="10" max="60" step="2" value="32" oninput="runInteractiveSimulation()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Traffic Scenario</label>
+                            <select id="simTraffic" class="form-control" onchange="runInteractiveSimulation()">
+                                <option value="Free">Normal / Free Flow (1.0x)</option>
+                                <option value="Moderate" selected>Moderate Traffic (1.25x)</option>
+                                <option value="Heavy">Heavy Congestion (1.6x)</option>
+                                <option value="Jam">Gridlock / Peak Rush (2.1x)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Remaining Stops</label>
+                            <select id="simStops" class="form-control" onchange="runInteractiveSimulation()">
+                                <option value="1">1 Stop Remaining</option>
+                                <option value="2">2 Stops Remaining</option>
+                                <option value="3" selected>3 Stops Remaining</option>
+                                <option value="5">5 Stops Remaining</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Simulator Output Box -->
+                    <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: var(--radius-sm); margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 12px; color: #4338ca; font-weight: 700; text-transform: uppercase;">Simulated AI Prediction</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #312e81;" id="simOutputClock">~ 03:48 PM</div>
+                            <div style="font-size: 12px; color: #4338ca;" id="simOutputAdvisory">Optimal travel conditions.</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 32px; font-weight: 800; color: var(--primary);" id="simOutputETA">15 mins</div>
+                            <span class="badge badge-success" id="simOutputConf">96% Conf</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stop-by-Stop Schedule Timeline -->
+        <div class="card">
+            <div class="card-title">
+                <span>🚏 Complete Route Stop Schedule & Time-Table</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stop #</th>
+                            <th>Station Name</th>
+                            <th>Distance From Current Bus</th>
+                            <th>Arrival Clock Time</th>
+                            <th>Countdown</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stopTimelineTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted);">Loading stops...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fleet-Wide ETA Summary Table -->
+        <div class="card">
+            <div class="card-title">
+                <span>🚍 Fleet-Wide Real-Time ETA Overview</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Route</th>
+                            <th>Live Speed</th>
+                            <th>Traffic State</th>
+                            <th>Distance</th>
+                            <th>Predicted ETA</th>
+                            <th>Arrival Clock</th>
+                            <th>Confidence</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fleetETATableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted);">Calculating fleet predictions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="tracking.html">Live Map</a>
+            <a href="dashboard.html">Student Portal</a>
+            <a href="adminDashboard.html">Admin Command</a>
+        </div>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/eta.js"></script>
+</body>
+</html>

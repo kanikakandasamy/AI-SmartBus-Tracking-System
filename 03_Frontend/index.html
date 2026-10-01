@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Bus Tracking & Predictive Telemetry System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🚍</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">AI System</span></h1>
+                <p>Next-Gen Transit Telemetry</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html" class="active">Home</a>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="dashboard.html">Student</a>
+            <a href="driver.html">Driver</a>
+            <a href="adminDashboard.html">Admin</a>
+            <a href="notification.html">Alerts</a>
+            <a href="login.html" class="btn btn-sm" style="margin-left: 8px;">Portal Login</a>
+        </nav>
+
+        <div class="nav-actions">
+            <span class="live-badge">
+                <span class="pulse-dot"></span> Live Fleet Active
+            </span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-pill">
+                <span class="pulse-dot"></span> AI Telemetry Engine V2.5 Running
+            </div>
+            <h2>Intelligent Real-Time College Transit <br><span class="highlight" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Powered by Predictive AI</span></h2>
+            <p>
+                Experience ultra-precise bus tracking, dynamic multi-factor ETA predictions, proximity geofencing, and immediate emergency telemetry dispatch.
+            </p>
+
+            <div class="hero-actions">
+                <a href="tracking.html" class="btn" style="padding: 14px 28px; font-size: 16px;">
+                    🗺️ Open Live Fleet Radar
+                </a>
+                <a href="eta.html" class="btn btn-secondary" style="padding: 14px 28px; font-size: 16px;">
+                    🤖 Explore AI ETA Engine
+                </a>
+                <a href="login.html" class="btn btn-secondary" style="padding: 14px 28px; font-size: 16px;">
+                    🔐 Portal Sign In
+                </a>
+            </div>
+        </section>
+
+        <!-- Live Metrics Banner -->
+        <div class="container">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Fleet Vehicles</span>
+                        <div class="stat-icon indigo">🚌</div>
+                    </div>
+                    <div class="stat-value" id="homeTotalBuses">4 Buses</div>
+                    <div class="stat-meta positive">
+                        <span>3 Transmitting GPS</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">AI ETA Precision</span>
+                        <div class="stat-icon emerald">⏱️</div>
+                    </div>
+                    <div class="stat-value">96.4%</div>
+                    <div class="stat-meta positive">
+                        <span>Haversine + Traffic Multiplier</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Active Routes</span>
+                        <div class="stat-icon sky">🛣️</div>
+                    </div>
+                    <div class="stat-value" id="homeTotalRoutes">3 Corridors</div>
+                    <div class="stat-meta">
+                        <span>15 Scheduled Waypoints</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-title">Telemetry Latency</span>
+                        <div class="stat-icon purple">⚡</div>
+                    </div>
+                    <div class="stat-value">&lt; 15 ms</div>
+                    <div class="stat-meta positive">
+                        <span>Real-Time SSE Stream</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Access Cards -->
+            <div class="page-title" style="margin-top: 10px; margin-bottom: 20px;">
+                <h2>🎯 Choose Your Transit Experience</h2>
+                <p>Tailored interfaces designed for students, drivers, and campus administrators.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <!-- Student Card -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 12px;">🎓</div>
+                        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Student Rider Tracker</h3>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+                            Personalized arrival countdown to your exact bus stop, proximity geofence alerts, live bus occupancy meter, and quick SOS emergency broadcast.
+                        </p>
+                    </div>
+                    <a href="dashboard.html" class="btn" style="width: 100%;">Open Student Portal →</a>
+                </div>
+
+                <!-- Driver Card -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 12px;">👨‍✈️</div>
+                        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Driver Cockpit</h3>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+                            Real-time GPS trip controller, digital speedometer, next waypoint guidance, passenger boarding counter, and instant student delay broadcaster.
+                        </p>
+                    </div>
+                    <a href="driver.html" class="btn btn-secondary" style="width: 100%;">Open Driver Cockpit →</a>
+                </div>
+
+                <!-- Admin Card -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 12px;">👨‍💼</div>
+                        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Admin Command Hub</h3>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+                            Fleet overview analytics, live vehicle telemetry feeds, driver allocations, route optimizer, and emergency alert monitor.
+                        </p>
+                    </div>
+                    <a href="adminDashboard.html" class="btn btn-secondary" style="width: 100%;">Open Admin Command →</a>
+                </div>
+            </div>
+
+            <!-- Advanced Technology Highlights -->
+            <div class="card" style="background: white; border-radius: var(--radius-lg); padding: 36px; margin-bottom: 40px;">
+                <div class="page-title" style="margin-bottom: 24px;">
+                    <h2>⚡ Core System Capabilities</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px;">
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">🤖</div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Multi-Factor AI ETA Engine</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                            Calculates true geodesic distance via Haversine formula, factors rush-hour congestion indices, and models stop dwell times.
+                        </p>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">🗺️</div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Interactive Live GPS Radar</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                            High-resolution OpenStreetMap rendering with animated pulsing radar markers, directional heading, and route corridors.
+                        </p>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">🚏</div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Proximity Geofence Alerts</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                            Instant audio chime and visual alert banner when the bus is within 2 km or 5 minutes of the student's designated stop.
+                        </p>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">🚨</div>
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">1-Tap Emergency SOS</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                            Zero-delay distress beacon broadcasts GPS coordinates and audio siren across admin monitors and emergency response units.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking & Notification System. Designed with precision.</div>
+        <div>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="login.html">Sign In</a>
+        </div>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        async function loadHomeMetrics() {
+            const res = await SmartBusAPI.getDashboard();
+            if (res.success && res.data) {
+                document.getElementById("homeTotalBuses").innerText = `${res.data.totalBuses} Buses`;
+                document.getElementById("homeTotalRoutes").innerText = `${res.data.totalRoutes} Corridors`;
+            }
+        }
+        window.addEventListener("DOMContentLoaded", loadHomeMetrics);
+    </script>
+</body>
+</html>

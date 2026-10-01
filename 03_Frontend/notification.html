@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification & Advisory Center | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🔔</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Advisory Center</span></h1>
+                <p>Broadcasts & Emergency Alerts</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Student</a>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="notification.html" class="active">Alerts</a>
+            <a href="adminDashboard.html">Admin</a>
+            <a href="driver.html">Driver</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn-sos" onclick="triggerEmergencySOS(1)">
+                🚨 SOS Center
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>🔔 Real-Time Transit Alerts & Announcements</h2>
+                <p>Publish instant push advisories to student portals, driver terminals, and admin monitors.</p>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" onclick="loadNotifications()">🔄 Refresh Feed</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Broadcast Composer Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📢 Compose Dispatch Advisory</span>
+                </div>
+                <div class="card-subtitle">Broadcasts live across all connected web clients</div>
+
+                <form id="notificationForm" onsubmit="handleSendNotification(event)">
+                    <div class="form-group">
+                        <label>Target Audience / Bus</label>
+                        <select id="bus_id" class="form-control">
+                            <option value="">📢 All Fleet Buses (Campus-Wide)</option>
+                            <!-- Populated dynamically by JS -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Advisory Category</label>
+                        <select id="notifType" class="form-control">
+                            <option value="info">ℹ️ General Transit Notice</option>
+                            <option value="delay">⚠️ Traffic Delay Advisory</option>
+                            <option value="arrival">🚏 Stop Approaching Alert</option>
+                            <option value="emergency">🚨 High-Priority Emergency Notice</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alert Title</label>
+                        <input type="text" id="notifTitle" class="form-control" placeholder="e.g. Weather Delay Advisory" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Message Content</label>
+                        <textarea id="notifMessage" class="form-control" rows="4" placeholder="Enter concise alert message for riders..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">
+                        🚀 Dispatch Live Announcement
+                    </button>
+                </form>
+            </div>
+
+            <!-- Feed History Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📡 Live Announcement Feed</span>
+                    <span class="live-badge"><span class="pulse-dot"></span> Real-Time Stream</span>
+                </div>
+
+                <div id="notificationList" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+                    <!-- Feed items populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="tracking.html">Live Map</a>
+            <a href="eta.html">AI ETA</a>
+            <a href="dashboard.html">Student Portal</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/notification.js"></script>
+</body>
+</html>

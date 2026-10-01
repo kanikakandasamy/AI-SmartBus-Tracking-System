@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Directory | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🎓</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Students Hub</span></h1>
+                <p>Ridership & Pass Directory</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="adminDashboard.html">Dashboard</a>
+            <a href="buses.html">Buses</a>
+            <a href="drivers.html">Drivers</a>
+            <a href="students.html" class="active">Students</a>
+            <a href="routes.html">Routes</a>
+            <a href="allocation.html">Allocations</a>
+            <a href="tracking.html">Tracking</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn btn-sm" onclick="openAddModal()">
+                ➕ Enroll Student
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>🎓 Student Passenger Directory</h2>
+                <p>Manage enrolled student accounts, boarding stops, and designated transit bus allocations.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="studentSearchInput" placeholder="🔍 Search student or Reg No..." class="form-control" style="width: 260px;" oninput="filterStudents()">
+                <button class="btn btn-secondary btn-sm" onclick="loadStudents()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Student Table Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Enrolled Students</span>
+                <span class="badge badge-info" id="studentCountBadge">4 Students</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student Name</th>
+                            <th>Reg. Number</th>
+                            <th>Email Address</th>
+                            <th>Assigned Bus</th>
+                            <th>Designated Stop</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading students...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Student Modal -->
+    <div id="studentModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;" id="modalTitle">Enroll New Student</h3>
+
+            <input type="hidden" id="editStudentId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Student Full Name</label>
+                    <input type="text" id="studentNameInput" placeholder="e.g. Kanika Kandasamy" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Registration Number</label>
+                    <input type="text" id="studentRegNo" placeholder="2026CS105" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="studentEmail" placeholder="student@smartbus.com" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="studentPassword" placeholder="••••••••" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Assigned Bus</label>
+                    <select id="studentBusSelect" class="form-control">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Boarding Stop Name</label>
+                    <input type="text" id="studentStop" placeholder="e.g. Anna Nagar East" class="form-control" required>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="saveStudent()">Save Student</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="adminDashboard.html">Admin Hub</a>
+            <a href="dashboard.html">Student Portal</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        let allStudents = [];
+        let allBuses = [];
+
+        async function loadInitialData() {
+            const [studRes, busRes] = await Promise.all([
+                SmartBusAPI.getStudents(),
+                SmartBusAPI.getBuses()
+            ]);
+
+            if (busRes.success && busRes.data) {
+                allBuses = busRes.data;
+                const select = document.getElementById("studentBusSelect");
+                select.innerHTML = allBuses.map(b => `<option value="${b.id}">🚍 ${b.bus_number}</option>`).join("");
+            }
+
+            if (studRes.success && studRes.data) {
+                allStudents = studRes.data;
+                renderStudents(allStudents);
+            }
+        }
+
+        async function loadStudents() {
+            const res = await SmartBusAPI.getStudents();
+            if (res.success && res.data) {
+                allStudents = res.data;
+                renderStudents(allStudents);
+            }
+        }
+
+        function renderStudents(list) {
+            document.getElementById("studentCountBadge").innerText = `${list.length} Students`;
+            const tbody = document.getElementById("studentTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No students found</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(s => {
+                const bus = allBuses.find(b => b.id === s.bus_id);
+                const busLabel = bus ? bus.bus_number : (s.bus_id ? `BUS #${s.bus_id}` : "Unassigned");
+
+                return `
+                    <tr>
+                        <td><strong>#${s.id}</strong></td>
+                        <td><strong>🎓 ${s.name}</strong></td>
+                        <td><code>${s.reg_no}</code></td>
+                        <td>${s.email}</td>
+                        <td><span class="badge badge-info">🚍 ${busLabel}</span></td>
+                        <td>🚏 ${s.stop_name || 'Campus Gate'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="openEditModal(${s.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        function filterStudents() {
+            const q = document.getElementById("studentSearchInput").value.toLowerCase();
+            const filtered = allStudents.filter(s =>
+                s.name.toLowerCase().includes(q) ||
+                s.reg_no.toLowerCase().includes(q) ||
+                s.email.toLowerCase().includes(q)
+            );
+            renderStudents(filtered);
+        }
+
+        function openAddModal() {
+            document.getElementById("editStudentId").value = "";
+            document.getElementById("studentNameInput").value = "";
+            document.getElementById("studentRegNo").value = "";
+            document.getElementById("studentEmail").value = "";
+            document.getElementById("studentPassword").value = "student123";
+            document.getElementById("studentStop").value = "Anna Nagar East";
+            document.getElementById("modalTitle").innerText = "Enroll New Student";
+            document.getElementById("studentModal").classList.add("active");
+        }
+
+        function openEditModal(id) {
+            const student = allStudents.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById("editStudentId").value = student.id;
+            document.getElementById("studentNameInput").value = student.name;
+            document.getElementById("studentRegNo").value = student.reg_no;
+            document.getElementById("studentEmail").value = student.email;
+            document.getElementById("studentPassword").value = student.password || "student123";
+            document.getElementById("studentBusSelect").value = student.bus_id || (allBuses[0] ? allBuses[0].id : "");
+            document.getElementById("studentStop").value = student.stop_name || "Campus Gate";
+            document.getElementById("modalTitle").innerText = `Edit Student: ${student.name}`;
+            document.getElementById("studentModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("studentModal").classList.remove("active");
+        }
+
+        async function saveStudent() {
+            const id = document.getElementById("editStudentId").value;
+            const name = document.getElementById("studentNameInput").value.trim();
+            const reg_no = document.getElementById("studentRegNo").value.trim();
+            const email = document.getElementById("studentEmail").value.trim();
+            const password = document.getElementById("studentPassword").value.trim();
+            const bus_id = parseInt(document.getElementById("studentBusSelect").value) || null;
+            const stop_name = document.getElementById("studentStop").value.trim();
+
+            if (!name || !reg_no || !email) {
+                Toast.show("Validation", "Name, register number, and email are required.", "warning");
+                return;
+            }
+
+            const payload = { name, reg_no, email, password, bus_id, stop_name };
+            const res = await SmartBusAPI.saveStudent(payload, id || null);
+
+            if (res.success) {
+                Toast.show("Success", id ? "Student record updated." : "Student enrolled successfully.", "success");
+                closeModal();
+                loadStudents();
+            } else {
+                Toast.show("Error", res.message || "Failed to save student.", "danger");
+            }
+        }
+
+        async function deleteStudent(id) {
+            if (!confirm(`Are you sure you want to delete Student #${id}?`)) return;
+
+            const res = await SmartBusAPI.deleteStudent(id);
+            if (res.success) {
+                Toast.show("Deleted", "Student removed.", "info");
+                loadStudents();
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadInitialData);
+    </script>
+</body>
+</html>

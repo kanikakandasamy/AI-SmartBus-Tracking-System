@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login Portal | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-page-bg {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 50% 10%, rgba(79, 70, 229, 0.15) 0%, #0f172a 80%);
+        }
+        .login-card-glass {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .login-card-glass label {
+            color: #cbd5e1;
+        }
+        .login-card-glass .form-control {
+            background: rgba(15, 23, 42, 0.7);
+            border-color: #334155;
+            color: white;
+        }
+        .login-card-glass .form-control:focus {
+            border-color: #818cf8;
+            background: rgba(15, 23, 42, 0.9);
+        }
+    </style>
+</head>
+<body class="login-page-bg">
+
+    <!-- Top Simplified Nav -->
+    <header style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🚍</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Auth Portal</span></h1>
+                <p>Transit Identity Gateway</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">← Back to Home</a>
+            <a href="tracking.html">Live Map</a>
+        </nav>
+    </header>
+
+    <div class="login-wrapper">
+        <div class="login-card login-card-glass">
+            <div class="login-header">
+                <div style="font-size: 38px; margin-bottom: 8px;">🔐</div>
+                <h2 style="color: white;">Welcome to SmartBus</h2>
+                <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Select your role to access your dedicated terminal</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Access Role</label>
+                    <select id="role" class="form-control" onchange="onRoleChange()">
+                        <option value="admin">👨‍💼 Campus Administrator</option>
+                        <option value="driver">👨‍✈️ Transit Driver</option>
+                        <option value="student">🎓 Student Passenger</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="admin@smartbus.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 15px;">
+                    Sign In to Portal
+                </button>
+            </form>
+
+            <!-- 1-Click Fast Demo Logins -->
+            <div class="quick-demo-logins">
+                <div class="quick-demo-title">⚡ 1-Click Demo Login Fill</div>
+                <div class="demo-chips">
+                    <div class="demo-chip" onclick="fillDemo('admin')">👨‍💼 Admin</div>
+                    <div class="demo-chip" onclick="fillDemo('driver')">👨‍✈️ Driver</div>
+                    <div class="demo-chip" onclick="fillDemo('student')">🎓 Student</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>

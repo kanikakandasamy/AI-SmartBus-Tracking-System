@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Network | AI Smart Bus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <a href="index.html" class="brand-container">
+            <div class="brand-logo">🛣️</div>
+            <div class="brand-info">
+                <h1>SmartBus <span class="highlight">Routes Hub</span></h1>
+                <p>Corridors & Stop Sequences</p>
+            </div>
+        </a>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="adminDashboard.html">Dashboard</a>
+            <a href="buses.html">Buses</a>
+            <a href="drivers.html">Drivers</a>
+            <a href="students.html">Students</a>
+            <a href="routes.html" class="active">Routes</a>
+            <a href="allocation.html">Allocations</a>
+            <a href="tracking.html">Tracking</a>
+            <a href="login.html" onclick="SmartBusAPI.logout()">Logout</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn btn-sm" onclick="openAddModal()">
+                ➕ Add New Route
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h2>🛣️ Transit Corridors & Waypoints</h2>
+                <p>Define departure hubs, destinations, distance metrics, and stop networks.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="routeSearchInput" placeholder="🔍 Search route name..." class="form-control" style="width: 240px;" oninput="filterRoutes()">
+                <button class="btn btn-secondary btn-sm" onclick="loadRoutes()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Routes Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Active Transit Corridors</span>
+                <span class="badge badge-info" id="routeCountBadge">3 Routes</span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Route Corridor Name</th>
+                            <th>Origin Hub</th>
+                            <th>Destination</th>
+                            <th>Total Distance</th>
+                            <th>Est. Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routeTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading transit routes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Route Modal -->
+    <div id="routeModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 16px;" id="modalTitle">Create New Route</h3>
+
+            <input type="hidden" id="editRouteId">
+
+            <div class="form-group">
+                <label>Route Corridor Name</label>
+                <input type="text" id="routeName" placeholder="e.g. Route 4 - East Link" class="form-control" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Source / Starting Hub</label>
+                    <input type="text" id="routeSource" placeholder="e.g. Central Station" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Final Destination</label>
+                    <input type="text" id="routeDest" placeholder="e.g. Engineering Campus" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Total Distance (km)</label>
+                    <input type="number" id="routeDistance" step="0.5" value="16.5" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Est. Duration (Minutes)</label>
+                    <input type="number" id="routeDuration" value="45" class="form-control">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" style="flex: 1;" onclick="saveRoute()">Save Route</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 AI Smart Bus Tracking System. All rights reserved.</div>
+        <div>
+            <a href="adminDashboard.html">Admin Hub</a>
+            <a href="tracking.html">Live Map</a>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        let allRoutes = [];
+
+        async function loadRoutes() {
+            const res = await SmartBusAPI.getRoutes();
+            if (res.success && res.data) {
+                allRoutes = res.data;
+                renderRoutes(allRoutes);
+            }
+        }
+
+        function renderRoutes(list) {
+            document.getElementById("routeCountBadge").innerText = `${list.length} Routes`;
+            const tbody = document.getElementById("routeTableBody");
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">No transit routes configured</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(r => `
+                <tr>
+                    <td><strong>#${r.id}</strong></td>
+                    <td><strong>🛣️ ${r.route_name}</strong></td>
+                    <td>${r.source}</td>
+                    <td>${r.destination}</td>
+                    <td><span class="badge badge-info">${r.total_distance_km || 16.5} km</span></td>
+                    <td><span class="badge badge-purple">${r.estimated_duration_min || 45} mins</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="openEditModal(${r.id})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteRoute(${r.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function filterRoutes() {
+            const q = document.getElementById("routeSearchInput").value.toLowerCase();
+            const filtered = allRoutes.filter(r => r.route_name.toLowerCase().includes(q) || r.source.toLowerCase().includes(q) || r.destination.toLowerCase().includes(q));
+            renderRoutes(filtered);
+        }
+
+        function openAddModal() {
+            document.getElementById("editRouteId").value = "";
+            document.getElementById("routeName").value = "";
+            document.getElementById("routeSource").value = "";
+            document.getElementById("routeDest").value = "Engineering Campus";
+            document.getElementById("routeDistance").value = "18.0";
+            document.getElementById("routeDuration").value = "45";
+            document.getElementById("modalTitle").innerText = "Create New Transit Route";
+            document.getElementById("routeModal").classList.add("active");
+        }
+
+        function openEditModal(id) {
+            const route = allRoutes.find(r => r.id === id);
+            if (!route) return;
+
+            document.getElementById("editRouteId").value = route.id;
+            document.getElementById("routeName").value = route.route_name;
+            document.getElementById("routeSource").value = route.source;
+            document.getElementById("routeDest").value = route.destination;
+            document.getElementById("routeDistance").value = route.total_distance_km || 16.5;
+            document.getElementById("routeDuration").value = route.estimated_duration_min || 45;
+            document.getElementById("modalTitle").innerText = `Edit Route #${route.id}`;
+            document.getElementById("routeModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("routeModal").classList.remove("active");
+        }
+
+        async function saveRoute() {
+            const id = document.getElementById("editRouteId").value;
+            const route_name = document.getElementById("routeName").value.trim();
+            const source = document.getElementById("routeSource").value.trim();
+            const destination = document.getElementById("routeDest").value.trim();
+            const total_distance_km = parseFloat(document.getElementById("routeDistance").value) || 16.5;
+            const estimated_duration_min = parseInt(document.getElementById("routeDuration").value) || 45;
+
+            if (!route_name || !source || !destination) {
+                Toast.show("Validation", "Please fill in route name, origin, and destination.", "warning");
+                return;
+            }
+
+            const payload = { route_name, source, destination, total_distance_km, estimated_duration_min };
+            const res = await SmartBusAPI.saveRoute(payload, id || null);
+
+            if (res.success) {
+                Toast.show("Success", id ? "Route updated." : "New route created.", "success");
+                closeModal();
+                loadRoutes();
+            } else {
+                Toast.show("Error", res.message || "Failed to save route.", "danger");
+            }
+        }
+
+        async function deleteRoute(id) {
+            if (!confirm(`Are you sure you want to delete Route #${id}?`)) return;
+
+            const res = await SmartBusAPI.deleteRoute(id);
+            if (res.success) {
+                Toast.show("Deleted", "Route removed.", "info");
+                loadRoutes();
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadRoutes);
+    </script>
+</body>
+</html>
