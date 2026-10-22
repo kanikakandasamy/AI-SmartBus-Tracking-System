@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ai-smartbus-tracking-system
+    env: node
+    plan: free
+    buildCommand: npm install && cd 07_Backend && npm install
+    startCommand: node 07_Backend/server.js
+    envVars:
+      - key: PORT
+        value: 5002
+      - key: JWT_SECRET
+        value: smartbus_secret_key_cloud_2026
