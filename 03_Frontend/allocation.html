@@ -187,13 +187,14 @@
             const bus_id = parseInt(document.getElementById("allocBus").value);
             const driver_id = parseInt(document.getElementById("allocDriver").value);
             const route_id = parseInt(document.getElementById("allocRoute").value);
+            const shift = document.getElementById("allocShift").value;
 
             if (!bus_id || !driver_id || !route_id) {
                 Toast.show("Validation", "Please select bus, driver, and route.", "warning");
                 return;
             }
 
-            const res = await SmartBusAPI.saveAllocation({ bus_id, driver_id, route_id });
+            const res = await SmartBusAPI.saveAllocation({ bus_id, driver_id, route_id, shift });
             if (res.success) {
                 Toast.show("Allocation Dispatched", "Bus, driver, and route successfully linked.", "success");
                 loadAllData();

@@ -84,17 +84,40 @@ exports.addBus = (req, res) => {
     });
 };
 
-// Update bus
+// Update bus (supports partial or complete field updates)
 exports.updateBus = (req, res) => {
-    const { bus_number, driver_id = null, capacity = 50, current_occupancy = 0, status = "Active" } = req.body;
+    const fields = [];
+    const values = [];
 
-    const sql = `
-        UPDATE buses
-        SET bus_number = ?, driver_id = ?, capacity = ?, current_occupancy = ?, status = ?
-        WHERE id = ?
-    `;
+    if (req.body.bus_number !== undefined) {
+        fields.push("bus_number = ?");
+        values.push(req.body.bus_number);
+    }
+    if (req.body.driver_id !== undefined) {
+        fields.push("driver_id = ?");
+        values.push(req.body.driver_id || null);
+    }
+    if (req.body.capacity !== undefined) {
+        fields.push("capacity = ?");
+        values.push(parseInt(req.body.capacity));
+    }
+    if (req.body.current_occupancy !== undefined) {
+        fields.push("current_occupancy = ?");
+        values.push(parseInt(req.body.current_occupancy));
+    }
+    if (req.body.status !== undefined) {
+        fields.push("status = ?");
+        values.push(req.body.status);
+    }
 
-    db.query(sql, [bus_number, driver_id || null, capacity, current_occupancy, status, req.params.id], (err) => {
+    if (fields.length === 0) {
+        return res.status(400).json({ success: false, message: "No fields provided to update" });
+    }
+
+    values.push(req.params.id);
+    const sql = `UPDATE buses SET ${fields.join(", ")} WHERE id = ?`;
+
+    db.query(sql, values, (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: err.message });
         }

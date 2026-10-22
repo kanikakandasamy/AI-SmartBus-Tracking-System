@@ -4,11 +4,11 @@
 // server.js
 // ============================================
 
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 
 const app = express();
 
@@ -73,15 +73,32 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Helper to find local LAN IP for mobile phone access
+const os = require("os");
+function getLocalNetworkIp() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const net of interfaces[name]) {
+            if (net.family === "IPv4" && !net.internal) {
+                return net.address;
+            }
+        }
+    }
+    return "localhost";
+}
+
 // Start Server
 const PORT = process.env.PORT || 5002;
+const localIp = getLocalNetworkIp();
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n======================================================`);
     console.log(`🚍 AI Smart Bus Tracking & Notification System Running`);
-    console.log(`📡 Server Address: http://localhost:${PORT}`);
+    console.log(`📡 Local Computer:    http://localhost:${PORT}`);
+    console.log(`📱 Mobile (Same Wi-Fi): http://${localIp}:${PORT}`);
     console.log(`🗺️ Web App Interface: http://localhost:${PORT}/index.html`);
-    console.log(`⚡ Live Telemetry Stream: http://localhost:${PORT}/api/tracking/stream`);
-    console.log(`🤖 Advanced AI ETA Engine: http://localhost:${PORT}/api/eta`);
+    console.log(`👨‍✈️ Driver Cockpit:   http://${localIp}:${PORT}/driver.html`);
+    console.log(`⚡ Live Telemetry:    http://localhost:${PORT}/api/tracking/stream`);
+    console.log(`🤖 Advanced AI ETA:   http://localhost:${PORT}/api/eta`);
     console.log(`======================================================\n`);
 });

@@ -4,6 +4,8 @@
 // config/db.js
 // ============================================
 
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const mysql = require("mysql2");
 
 // Create MySQL Connection Pool

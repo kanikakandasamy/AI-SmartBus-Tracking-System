@@ -1,6 +1,6 @@
 // ========================================================
 // AI Smart Bus Tracking and Notification System
-// Live Map & Telemetry Controller - V2.5
+// Live Map & Autonomous Telemetry Controller - V2.6
 // ========================================================
 
 let map = null;
@@ -8,11 +8,16 @@ let busMarkers = {};
 let routePolyline = null;
 let stopMarkers = [];
 let allBuses = [];
+let allRoutes = [];
+let allAllocations = [];
 let selectedBusId = 1;
 let autoSimulateInterval = null;
+let userLocationMarker = null;
+let busBreadcrumbs = {}; // busId -> L.polyline
+let busHistory = {}; // busId -> [[lat, lng], ...]
 
-// Route waypoints definitions for polyline rendering
-const ROUTE_COORDINATES = {
+// Default fallback paths for demo routes
+const DEFAULT_ROUTE_PATHS = {
     1: [
         [13.0827, 80.2707], // Central Station
         [13.0818, 80.2550], // Periamet
@@ -31,23 +36,12 @@ const ROUTE_COORDINATES = {
         [12.9810, 80.1780], // Airport
         [13.0067, 80.2025], // Guindy
         [13.1145, 80.1410]  // Engineering Campus
-    ]
-};
-
-const ROUTE_STOPS_META = {
-    1: [
-        { name: "Central Station", lat: 13.0827, lng: 80.2707, time: "Departed" },
-        { name: "Kilpauk Garden", lat: 13.0812, lng: 80.2405, time: "Departed" },
-        { name: "Anna Nagar East", lat: 13.0850, lng: 80.2101, time: "Approaching" },
-        { name: "Thirumangalam Metro", lat: 13.0835, lng: 80.1925, time: "+6 mins" },
-        { name: "Ambattur Estate", lat: 13.0980, lng: 80.1620, time: "+14 mins" },
-        { name: "Engineering Campus Gate", lat: 13.1145, lng: 80.1410, time: "+22 mins" }
     ],
-    2: [
-        { name: "Tambaram Hub", lat: 12.9304, lng: 80.1250, time: "Departed" },
-        { name: "Chromepet Station", lat: 12.9516, lng: 80.1412, time: "Departed" },
-        { name: "Guindy Industrial", lat: 13.0067, lng: 80.2025, time: "+11 mins" },
-        { name: "Engineering Campus Gate", lat: 13.1145, lng: 80.1410, time: "+25 mins" }
+    3: [
+        [13.0382, 80.1565], // Porur Toll
+        [13.0450, 80.1380], // Iyyappanthangal
+        [13.0510, 80.0950], // Poonamallee Bypass
+        [13.1145, 80.1410]  // Engineering Campus
     ]
 };
 
@@ -61,23 +55,72 @@ function initMap() {
         zoomControl: true
     });
 
-    // High quality OpenStreetMap tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19
     }).addTo(map);
+}
 
-    renderRoutePolyline(selectedBusId);
-    renderStops(selectedBusId);
+// Load metadata from API
+async function loadMetadata() {
+    try {
+        const [routesRes, allocRes] = await Promise.all([
+            SmartBusAPI.getRoutes(),
+            SmartBusAPI.getAllocations()
+        ]);
+
+        if (routesRes.success && routesRes.data) allRoutes = routesRes.data;
+        if (allocRes.success && allocRes.data) allAllocations = allocRes.data;
+    } catch (e) {
+        console.warn("Failed to load routes/allocations:", e);
+    }
+}
+
+// Get stops for a specific bus
+function getStopsForBus(busId) {
+    const alloc = allAllocations.find(a => a.bus_id === busId);
+    let route = null;
+    if (alloc) {
+        route = allRoutes.find(r => r.id === alloc.route_id);
+    }
+    if (!route && allRoutes.length > 0) {
+        route = allRoutes.find(r => r.id === busId) || allRoutes[0];
+    }
+
+    if (route && route.stops) {
+        try {
+            const parsed = typeof route.stops === "string" ? JSON.parse(route.stops) : route.stops;
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+    }
+
+    // Default stops fallback
+    return [
+        { name: "Central Station Hub", lat: 13.0827, lng: 80.2707, sequence: 1 },
+        { name: "Kilpauk Garden", lat: 13.0812, lng: 80.2405, sequence: 2 },
+        { name: "Anna Nagar East", lat: 13.0850, lng: 80.2101, sequence: 3 },
+        { name: "Thirumangalam Metro", lat: 13.0835, lng: 80.1925, sequence: 4 },
+        { name: "Ambattur Estate", lat: 13.0980, lng: 80.1620, sequence: 5 },
+        { name: "Engineering Campus Gate", lat: 13.1145, lng: 80.1410, sequence: 6 }
+    ];
 }
 
 // Render Route Polyline
 function renderRoutePolyline(busId) {
     if (routePolyline) {
         map.removeLayer(routePolyline);
+        routePolyline = null;
     }
 
-    const path = ROUTE_COORDINATES[busId] || ROUTE_COORDINATES[1];
+    let path = DEFAULT_ROUTE_PATHS[busId];
+    if (!path) {
+        const stops = getStopsForBus(busId);
+        if (stops.length > 1) {
+            path = stops.map(s => [s.lat, s.lng]);
+        }
+    }
+    if (!path || path.length === 0) path = DEFAULT_ROUTE_PATHS[1];
+
     routePolyline = L.polyline(path, {
         color: "#4f46e5",
         weight: 5,
@@ -86,12 +129,12 @@ function renderRoutePolyline(busId) {
     }).addTo(map);
 }
 
-// Render Stop Waypoint Markers
+// Render Stop Markers
 function renderStops(busId) {
     stopMarkers.forEach(m => map.removeLayer(m));
     stopMarkers = [];
 
-    const stops = ROUTE_STOPS_META[busId] || ROUTE_STOPS_META[1];
+    const stops = getStopsForBus(busId);
     stops.forEach((stop, idx) => {
         const isDestination = idx === stops.length - 1;
         const iconHtml = `<div style="background:${isDestination ? '#10b981' : '#ffffff'}; color:${isDestination ? '#fff' : '#4f46e5'}; border: 2px solid #4f46e5; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${idx + 1}</div>`;
@@ -107,8 +150,8 @@ function renderStops(busId) {
         marker.bindPopup(`
             <div style="font-family: sans-serif; min-width: 150px;">
                 <div style="font-weight: 800; color: #0f172a; margin-bottom: 4px;">🚏 ${stop.name}</div>
-                <div style="font-size: 12px; color: #64748b;">Stop #${idx + 1}</div>
-                <div style="font-size: 12px; color: #4f46e5; font-weight: 700; margin-top: 4px;">Status: ${stop.time}</div>
+                <div style="font-size: 12px; color: #64748b;">Stop #${idx + 1} of ${stops.length}</div>
+                <div style="font-size: 12px; color: #4f46e5; font-weight: 700; margin-top: 4px;">Status: Scheduled Waypoint</div>
             </div>
         `);
         stopMarkers.push(marker);
@@ -121,6 +164,23 @@ function updateBusMarker(bus) {
     const isSelected = busId === selectedBusId;
     const lat = parseFloat(bus.latitude) || 13.0850;
     const lng = parseFloat(bus.longitude) || 80.2101;
+
+    // Breadcrumb path recording
+    if (!busHistory[busId]) busHistory[busId] = [];
+    busHistory[busId].push([lat, lng]);
+    if (busHistory[busId].length > 30) busHistory[busId].shift();
+
+    // Render breadcrumb polyline
+    if (!busBreadcrumbs[busId]) {
+        busBreadcrumbs[busId] = L.polyline(busHistory[busId], {
+            color: isSelected ? "#38bdf8" : "#94a3b8",
+            weight: 3,
+            opacity: 0.6
+        }).addTo(map);
+    } else {
+        busBreadcrumbs[busId].setLatLngs(busHistory[busId]);
+        busBreadcrumbs[busId].setStyle({ color: isSelected ? "#38bdf8" : "#94a3b8" });
+    }
 
     const iconHtml = `
         <div style="position: relative;">
@@ -148,13 +208,14 @@ function updateBusMarker(bus) {
     }
 
     busMarkers[busId].bindPopup(`
-        <div style="font-family: sans-serif; min-width: 180px;">
+        <div style="font-family: sans-serif; min-width: 190px;">
             <div style="font-weight: 800; font-size: 15px; color: #4f46e5;">🚍 ${bus.bus_number}</div>
-            <div style="font-size: 12px; color: #334155; margin-top: 4px;">Driver: <strong>${bus.driver_name || "N/A"}</strong></div>
+            <div style="font-size: 12px; color: #334155; margin-top: 4px;">Driver: <strong>${bus.driver_name || "Assigned Driver"}</strong></div>
             <div style="font-size: 12px; color: #334155;">Speed: <strong>${bus.speed} km/h</strong></div>
-            <div style="font-size: 12px; color: #334155;">Next Stop: <strong>${bus.next_stop}</strong></div>
-            <div style="margin-top: 6px;">
-                <span class="badge badge-success">ETA: ${bus.eta_minutes} mins</span>
+            <div style="font-size: 12px; color: #334155;">Next Stop: <strong>${bus.next_stop || "In Transit"}</strong></div>
+            <div style="margin-top: 6px; display: flex; gap: 6px;">
+                <span class="badge badge-success">ETA: ${bus.eta_minutes || 10} mins</span>
+                <span class="badge badge-info">${bus.distance_remaining_km || 4.5} km</span>
             </div>
         </div>
     `);
@@ -164,7 +225,6 @@ function updateBusMarker(bus) {
 function selectBus(busId) {
     selectedBusId = busId;
 
-    // Update bus chip styles
     document.querySelectorAll(".bus-chip").forEach(chip => {
         chip.classList.toggle("active", parseInt(chip.dataset.busId) === busId);
     });
@@ -183,12 +243,12 @@ function selectBus(busId) {
 // Update floating HUD elements
 function updateHUD(bus) {
     document.getElementById("hudBusName").innerText = bus.bus_number || `BUS #${bus.bus_id}`;
-    document.getElementById("hudSpeed").innerText = `${bus.speed || 0} km/h`;
+    document.getElementById("hudSpeed").innerText = `${Math.round(bus.speed || 0)} km/h`;
     document.getElementById("hudETA").innerText = `${bus.eta_minutes || 8} mins`;
 
     const trafficEl = document.getElementById("hudTraffic");
     const traffic = bus.traffic_level || "Normal";
-    trafficEl.innerText = traffic;
+    trafficEl.innerText = `${traffic} Traffic`;
     trafficEl.className = "badge " + (traffic === "Heavy" ? "badge-danger" : traffic === "Moderate" ? "badge-warning" : "badge-success");
 }
 
@@ -196,29 +256,28 @@ function updateHUD(bus) {
 function updateSidebar(bus) {
     document.getElementById("sidebarDriver").innerText = bus.driver_name || "Assigned Driver";
     document.getElementById("sidebarDriverPhone").innerText = bus.driver_phone || "+91 98451 23456";
-    document.getElementById("sidebarRoute").innerText = bus.route_name || "North Express";
+    document.getElementById("sidebarRoute").innerText = bus.route_name || "Campus Express";
     document.getElementById("sidebarDistance").innerText = `${bus.distance_remaining_km || 4.5} km`;
 
     // Occupancy
-    const occ = bus.current_occupancy || 25;
+    const occ = bus.current_occupancy || 0;
     const cap = bus.capacity || 50;
-    const pct = Math.round((occ / cap) * 100);
+    const pct = Math.min(100, Math.round((occ / cap) * 100));
     document.getElementById("occupancyText").innerText = `${occ} / ${cap} Seats (${pct}%)`;
     document.getElementById("occupancyBar").style.width = `${pct}%`;
 
-    // Stops timeline
     renderTimelineList(bus);
 }
 
 // Render sidebar stops list
 function renderTimelineList(bus) {
     const container = document.getElementById("stopsTimeline");
-    const stops = ROUTE_STOPS_META[selectedBusId] || ROUTE_STOPS_META[1];
+    const stops = getStopsForBus(selectedBusId);
     document.getElementById("totalStopsCount").innerText = `${stops.length} Stops`;
 
     let html = "";
     stops.forEach((stop, idx) => {
-        const isNext = stop.name.toLowerCase().includes((bus.next_stop || "").toLowerCase()) || idx === 2;
+        const isNext = (bus.next_stop && stop.name.toLowerCase().includes(bus.next_stop.toLowerCase())) || idx === 2;
         const isPassed = idx < 2;
 
         html += `
@@ -227,8 +286,8 @@ function renderTimelineList(bus) {
                 <div class="timeline-content">
                     <h4>${stop.name}</h4>
                     <p>
-                        <span>${isPassed ? 'Passed' : isNext ? 'Approaching Now' : 'Scheduled'}</span>
-                        <strong style="color: ${isNext ? 'var(--primary)' : 'inherit'}">${isPassed ? 'Done' : stop.time}</strong>
+                        <span>${isPassed ? 'Departed' : isNext ? 'Approaching Now' : 'Scheduled'}</span>
+                        <strong style="color: ${isNext ? 'var(--primary)' : 'inherit'}">${isPassed ? 'Done' : `Stop #${idx + 1}`}</strong>
                     </p>
                 </div>
             </div>
@@ -252,6 +311,63 @@ function fitFullRoute() {
     map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
 }
 
+// Passenger / User Geolocation
+function locateUser() {
+    if (!navigator.geolocation) {
+        Toast.show("Geolocation", "Your browser does not support location services.", "warning");
+        return;
+    }
+
+    Toast.show("Locating You", "Pinpointing your device location...", "info");
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const uLat = pos.coords.latitude;
+            const uLng = pos.coords.longitude;
+
+            const userIcon = L.divIcon({
+                className: "user-loc-pin",
+                html: `<div style="background:#0284c7; color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:16px; border:3px solid white; box-shadow:0 0 15px rgba(2,132,199,0.8);">📍</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            if (userLocationMarker) {
+                userLocationMarker.setLatLng([uLat, uLng]);
+            } else {
+                userLocationMarker = L.marker([uLat, uLng], { icon: userIcon }).addTo(map);
+            }
+
+            const currentBus = allBuses.find(b => (b.bus_id || b.id) === selectedBusId);
+            let distText = "";
+            if (currentBus && currentBus.latitude && currentBus.longitude) {
+                const distToBus = haversineLocal(uLat, uLng, currentBus.latitude, currentBus.longitude);
+                distText = `<br><span style="color:#4f46e5; font-weight:700;">Distance to ${currentBus.bus_number}: ${distToBus.toFixed(2)} km</span>`;
+            }
+
+            userLocationMarker.bindPopup(`<strong>Your Location</strong>${distText}`).openPopup();
+            map.flyTo([uLat, uLng], 14, { duration: 1.2 });
+            Toast.show("Location Found", "Centered map on your current location.", "success");
+        },
+        (err) => {
+            Toast.show("Location Error", "Could not get your position. Please allow location permissions.", "warning");
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+
+function haversineLocal(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 // Render bottom telemetry table
 function renderTable(buses) {
     const tbody = document.getElementById("trackingTableBody");
@@ -266,10 +382,10 @@ function renderTable(buses) {
             <td><span class="badge badge-success">${bus.status || 'Active'}</span></td>
             <td>${bus.driver_name || 'Driver'}</td>
             <td><code>${bus.latitude ? bus.latitude.toFixed(4) : '-'}, ${bus.longitude ? bus.longitude.toFixed(4) : '-'}</code></td>
-            <td><strong>${bus.speed} km/h</strong></td>
+            <td><strong>${Math.round(bus.speed)} km/h</strong></td>
             <td><span class="badge ${bus.traffic_level === 'Heavy' ? 'badge-danger' : 'badge-warning'}">${bus.traffic_level || 'Normal'}</span></td>
             <td>${bus.next_stop || 'Main Gate'}</td>
-            <td><strong style="color: var(--primary);">${bus.eta_minutes} mins</strong></td>
+            <td><strong style="color: var(--primary);">${bus.eta_minutes || 8} mins</strong></td>
             <td>
                 <button class="btn btn-sm" onclick="event.stopPropagation(); selectBus(${bus.bus_id || bus.id}); centerOnBus();">
                     Track
@@ -350,6 +466,10 @@ RealtimeTelemetry.on("bus_location_update", (updated) => {
             updateSidebar(allBuses[idx]);
         }
         renderTable(allBuses);
+    } else {
+        allBuses.push(updated);
+        updateBusMarker(updated);
+        renderTable(allBuses);
     }
 });
 
@@ -361,9 +481,15 @@ RealtimeTelemetry.on("initial_state", (data) => {
 });
 
 // Boot Tracking on Load
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
     initMap();
-    refreshTrackingData();
+    await loadMetadata();
+    await refreshTrackingData();
+
+    // Select first bus by default
+    if (allBuses.length > 0) {
+        selectBus(allBuses[0].bus_id || allBuses[0].id);
+    }
 
     // Fallback sync polling every 5 seconds
     setInterval(refreshTrackingData, 5000);

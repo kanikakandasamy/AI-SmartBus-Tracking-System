@@ -73,6 +73,24 @@ async function runTests() {
         if (res.status !== 200 || !Array.isArray(res.body.data)) throw new Error("Tracking failed");
     });
 
+    // 3b. Real Device GPS Tracking Update
+    await test("POST /api/tracking (Live Device GPS)", async () => {
+        const res = await request("/api/tracking", {
+            method: "POST",
+            body: {
+                bus_id: 1,
+                latitude: 13.0848,
+                longitude: 80.2095,
+                speed: 28.5,
+                heading: 275,
+                accuracy: 4.2
+            }
+        });
+        if (res.status !== 200 || !res.body.success || !res.body.data.next_stop || !res.body.data.eta_minutes) {
+            throw new Error("Live Device GPS update failed");
+        }
+    });
+
     // 4. Advanced ETA
     await test("GET /api/eta", async () => {
         const res = await request("/api/eta");

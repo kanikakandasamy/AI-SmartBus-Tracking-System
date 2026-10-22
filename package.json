@@ -1,0 +1,13 @@
+{
+  "name": "ai-smartbus-tracking-system",
+  "version": "2.6.0",
+  "description": "AI Smart Bus Tracking & Notification Real-Time Telemetry System",
+  "main": "07_Backend/server.js",
+  "scripts": {
+    "start": "node 07_Backend/server.js",
+    "init-db": "node 07_Backend/config/initDb.js",
+    "test": "node 07_Backend/test_endpoints.js"
+  },
+  "author": "Kanika Kandasamy",
+  "license": "MIT"
+}

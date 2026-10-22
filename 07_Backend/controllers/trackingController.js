@@ -140,62 +140,186 @@ exports.getBusTracking = (req, res) => {
     });
 };
 
-// POST /api/tracking - Update or insert tracking coordinate
+// Geodesic distance helper using Haversine formula (km)
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return parseFloat((R * c).toFixed(2));
+}
+
+// POST /api/tracking - Update or insert tracking coordinate with dynamic AI ETA calculation
 exports.updateTracking = (req, res) => {
     const {
         bus_id,
         latitude,
         longitude,
-        speed = 35.0,
+        speed = 0.0,
         heading = 0.0,
-        traffic_level = "Normal",
-        next_stop = "Next Stop",
-        distance_remaining_km = 4.0,
-        eta_minutes = 8
+        accuracy = null
     } = req.body;
 
     if (!bus_id || latitude === undefined || longitude === undefined) {
         return res.status(400).json({ success: false, message: "bus_id, latitude, and longitude are required." });
     }
 
-    const sql = `
-        INSERT INTO tracking
-        (bus_id, latitude, longitude, speed, heading, traffic_level, next_stop, distance_remaining_km, eta_minutes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const curLat = parseFloat(latitude);
+    const curLng = parseFloat(longitude);
+    const curSpeed = parseFloat(speed) || 0;
+    const curHeading = parseFloat(heading) || 0;
+
+    // Fetch the bus, assigned route, and driver information
+    const busQuery = `
+        SELECT
+            b.id AS bus_id,
+            b.bus_number,
+            b.capacity,
+            b.current_occupancy,
+            b.status,
+            d.name AS driver_name,
+            d.phone AS driver_phone,
+            r.route_name,
+            r.destination,
+            r.stops
+        FROM buses b
+        LEFT JOIN drivers d ON b.driver_id = d.id
+        LEFT JOIN allocations a ON b.id = a.bus_id
+        LEFT JOIN routes r ON a.route_id = r.id
+        WHERE b.id = ?
+        LIMIT 1
     `;
 
-    db.query(
-        sql,
-        [bus_id, latitude, longitude, speed, heading, traffic_level, next_stop, distance_remaining_km, eta_minutes],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ success: false, error: err.message });
+    db.query(busQuery, [bus_id], (err, busRows) => {
+        const bus = (busRows && busRows.length > 0) ? busRows[0] : null;
+
+        let stops = [];
+        if (bus && bus.stops) {
+            try {
+                stops = typeof bus.stops === "string" ? JSON.parse(bus.stops) : bus.stops;
+            } catch (e) {
+                stops = [];
+            }
+        }
+
+        // Determine traffic condition and multiplier from speed
+        let trafficLevel = "Normal";
+        let trafficMultiplier = 1.0;
+        if (curSpeed <= 0) {
+            trafficLevel = "Signal Stopped";
+            trafficMultiplier = 1.45;
+        } else if (curSpeed < 18) {
+            trafficLevel = "Heavy";
+            trafficMultiplier = 1.55;
+        } else if (curSpeed < 32) {
+            trafficLevel = "Moderate";
+            trafficMultiplier = 1.20;
+        } else {
+            trafficLevel = "Normal";
+            trafficMultiplier = 1.00;
+        }
+
+        let nextStopName = req.body.next_stop || null;
+        let distanceRemainingKm = req.body.distance_remaining_km !== undefined ? parseFloat(req.body.distance_remaining_km) : null;
+        let etaMinutes = req.body.eta_minutes !== undefined ? parseInt(req.body.eta_minutes) : null;
+
+        if (stops.length > 0) {
+            let closestIdx = 0;
+            let minDistance = 999999;
+            for (let i = 0; i < stops.length; i++) {
+                const s = stops[i];
+                if (s.lat && s.lng) {
+                    const d = haversineDistance(curLat, curLng, s.lat, s.lng);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        closestIdx = i;
+                    }
+                }
             }
 
-            const updatedData = {
-                id: result.insertId,
-                bus_id,
-                latitude: parseFloat(latitude),
-                longitude: parseFloat(longitude),
-                speed: parseFloat(speed),
-                heading: parseFloat(heading),
-                traffic_level,
-                next_stop,
-                distance_remaining_km: parseFloat(distance_remaining_km),
-                eta_minutes: parseInt(eta_minutes),
-                updated_at: new Date().toISOString()
-            };
+            let nextStopIdx = closestIdx;
+            if (minDistance < 0.20 && closestIdx < stops.length - 1) {
+                nextStopIdx = closestIdx + 1;
+            }
+            const upcomingStop = stops[nextStopIdx];
+            if (!nextStopName) {
+                nextStopName = upcomingStop.name || `Stop #${nextStopIdx + 1}`;
+            }
 
-            // Instant Real-Time Push to all SSE clients!
-            broadcastSSE("bus_location_update", updatedData);
+            if (distanceRemainingKm === null) {
+                const destStop = stops[stops.length - 1];
+                let distToDest = haversineDistance(curLat, curLng, destStop.lat, destStop.lng);
+                distanceRemainingKm = Math.max(0.2, distToDest);
+            }
 
-            res.json({
-                success: true,
-                message: "Tracking updated successfully",
-                data: updatedData
-            });
+            if (etaMinutes === null) {
+                const effectiveSpeed = curSpeed > 5 ? curSpeed : 26.0;
+                const remainingStopsCount = Math.max(1, stops.length - nextStopIdx);
+                const travelTime = (distanceRemainingKm / effectiveSpeed) * 60 * trafficMultiplier;
+                const dwellTime = remainingStopsCount * 1.5;
+                etaMinutes = Math.max(1, Math.round(travelTime + dwellTime));
+            }
+        } else {
+            if (!nextStopName) nextStopName = "Engineering Campus";
+            if (distanceRemainingKm === null) distanceRemainingKm = 4.5;
+            if (etaMinutes === null) etaMinutes = Math.max(1, Math.round((distanceRemainingKm / 30) * 60 * trafficMultiplier));
         }
-    );
+
+        if (req.body.traffic_level) trafficLevel = req.body.traffic_level;
+
+        const insertSql = `
+            INSERT INTO tracking
+            (bus_id, latitude, longitude, speed, heading, traffic_level, next_stop, distance_remaining_km, eta_minutes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+            insertSql,
+            [bus_id, curLat, curLng, curSpeed, curHeading, trafficLevel, nextStopName, distanceRemainingKm, etaMinutes],
+            (insertErr, result) => {
+                if (insertErr) {
+                    return res.status(500).json({ success: false, error: insertErr.message });
+                }
+
+                const enrichedData = {
+                    id: result.insertId,
+                    bus_id: parseInt(bus_id),
+                    bus_number: bus ? bus.bus_number : `BUS-${bus_id}`,
+                    driver_name: bus ? (bus.driver_name || "Assigned Driver") : "Assigned Driver",
+                    driver_phone: bus ? (bus.driver_phone || "N/A") : "N/A",
+                    route_name: bus ? (bus.route_name || "Campus Line") : "Campus Line",
+                    capacity: bus ? (bus.capacity || 50) : 50,
+                    current_occupancy: bus ? (bus.current_occupancy || 0) : 0,
+                    occupancy_rate: bus ? Math.round(((bus.current_occupancy || 0) / (bus.capacity || 50)) * 100) : 0,
+                    status: bus ? (bus.status || "Active") : "Active",
+                    latitude: curLat,
+                    longitude: curLng,
+                    speed: curSpeed,
+                    heading: curHeading,
+                    accuracy: accuracy ? parseFloat(accuracy) : null,
+                    traffic_level: trafficLevel,
+                    next_stop: nextStopName,
+                    distance_remaining_km: parseFloat(distanceRemainingKm.toFixed(2)),
+                    eta_minutes: etaMinutes,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Real-time broadcast to all SSE connected browsers
+                broadcastSSE("bus_location_update", enrichedData);
+
+                res.json({
+                    success: true,
+                    message: "Telemetry updated successfully",
+                    data: enrichedData
+                });
+            }
+        );
+    });
 };
 
 // GET /api/tracking/stream - Real-Time Server-Sent Events (SSE) Stream
@@ -284,46 +408,76 @@ exports.simulateStep = (req, res) => {
     const waypoint = path[currentIndex];
     const etaMins = Math.max(1, Math.round((waypoint.dist / Math.max(20, waypoint.speed)) * 60 + 2));
 
-    const sql = `
-        INSERT INTO tracking
-        (bus_id, latitude, longitude, speed, heading, traffic_level, next_stop, distance_remaining_km, eta_minutes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const busQuery = `
+        SELECT
+            b.id AS bus_id,
+            b.bus_number,
+            b.capacity,
+            b.current_occupancy,
+            b.status,
+            d.name AS driver_name,
+            d.phone AS driver_phone,
+            r.route_name
+        FROM buses b
+        LEFT JOIN drivers d ON b.driver_id = d.id
+        LEFT JOIN allocations a ON b.id = a.bus_id
+        LEFT JOIN routes r ON a.route_id = r.id
+        WHERE b.id = ?
+        LIMIT 1
     `;
 
-    db.query(
-        sql,
-        [busId, waypoint.lat, waypoint.lng, waypoint.speed, waypoint.heading, waypoint.speed < 26 ? "Heavy" : "Normal", waypoint.stop, waypoint.dist, etaMins],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ success: false, error: err.message });
+    db.query(busQuery, [busId], (bErr, bRows) => {
+        const bus = (bRows && bRows.length > 0) ? bRows[0] : null;
+
+        const sql = `
+            INSERT INTO tracking
+            (bus_id, latitude, longitude, speed, heading, traffic_level, next_stop, distance_remaining_km, eta_minutes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+            sql,
+            [busId, waypoint.lat, waypoint.lng, waypoint.speed, waypoint.heading, waypoint.speed < 26 ? "Heavy" : "Normal", waypoint.stop, waypoint.dist, etaMins],
+            (err, result) => {
+                if (err) {
+                    return res.status(500).json({ success: false, error: err.message });
+                }
+
+                const stepData = {
+                    id: result.insertId,
+                    bus_id: busId,
+                    bus_number: bus ? bus.bus_number : `BUS-${busId}`,
+                    driver_name: bus ? (bus.driver_name || "Assigned Driver") : "Assigned Driver",
+                    driver_phone: bus ? (bus.driver_phone || "N/A") : "N/A",
+                    route_name: bus ? (bus.route_name || "Campus Line") : "Campus Line",
+                    capacity: bus ? (bus.capacity || 50) : 50,
+                    current_occupancy: bus ? (bus.current_occupancy || 0) : 0,
+                    occupancy_rate: bus ? Math.round(((bus.current_occupancy || 0) / (bus.capacity || 50)) * 100) : 0,
+                    status: bus ? (bus.status || "Active") : "Active",
+                    latitude: waypoint.lat,
+                    longitude: waypoint.lng,
+                    speed: waypoint.speed,
+                    heading: waypoint.heading,
+                    traffic_level: waypoint.speed < 26 ? "Heavy" : "Normal",
+                    next_stop: waypoint.stop,
+                    distance_remaining_km: waypoint.dist,
+                    eta_minutes: etaMins,
+                    step_index: currentIndex,
+                    total_steps: path.length,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Broadcast to all listening clients
+                broadcastSSE("bus_location_update", stepData);
+
+                res.json({
+                    success: true,
+                    message: `Bus #${busId} advanced to step ${currentIndex + 1}/${path.length} (${waypoint.stop})`,
+                    data: stepData
+                });
             }
-
-            const stepData = {
-                id: result.insertId,
-                bus_id: busId,
-                latitude: waypoint.lat,
-                longitude: waypoint.lng,
-                speed: waypoint.speed,
-                heading: waypoint.heading,
-                traffic_level: waypoint.speed < 26 ? "Heavy" : "Normal",
-                next_stop: waypoint.stop,
-                distance_remaining_km: waypoint.dist,
-                eta_minutes: etaMins,
-                step_index: currentIndex,
-                total_steps: path.length,
-                updated_at: new Date().toISOString()
-            };
-
-            // Broadcast to all listening clients
-            broadcastSSE("bus_location_update", stepData);
-
-            res.json({
-                success: true,
-                message: `Bus #${busId} advanced to step ${currentIndex + 1}/${path.length} (${waypoint.stop})`,
-                data: stepData
-            });
-        }
-    );
+        );
+    });
 };
 
 // POST /api/tracking/sos - Broadcast Emergency SOS Alert

@@ -1,14 +1,11 @@
-
-
-````markdown
-# 🚌 AI Smart Bus Tracking and Notification System
+# 🚌 AI Smart Bus Tracking & Notification System (V2.6)
 
 <p align="center">
-  <b>Real-Time College Bus Tracking • AI-Based ETA Prediction • Smart Notifications</b>
+  <b>Real-Time College Bus Tracking • AI-Based Multi-Factor ETA Prediction • Smart Notifications</b>
 </p>
 
 <p align="center">
-  A web-based transportation management system designed to simplify college bus operations, provide live tracking information, estimate bus arrival times, and manage transportation notifications.
+  A state-of-the-art college transit telemetry platform combining authentic driver smartphone GPS tracking, predictive arrival estimation, interactive Leaflet fleet radar, passenger proximity geofencing, and immediate distress broadcasting.
 </p>
 
 <p align="center">
@@ -16,6 +13,7 @@
   <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express.js-green" alt="Backend">
   <img src="https://img.shields.io/badge/Database-MySQL-blue" alt="Database">
   <img src="https://img.shields.io/badge/Real--Time-SSE-purple" alt="Real-Time">
+  <img src="https://img.shields.io/badge/GPS-HTML5%20Geolocation-brightgreen" alt="GPS Telemetry">
   <img src="https://img.shields.io/badge/Authentication-JWT-red" alt="Authentication">
 </p>
 
@@ -23,513 +21,159 @@
 
 ## 📌 Overview
 
-The **AI Smart Bus Tracking and Notification System** is a web-based college transportation management platform developed to improve and simplify transportation operations.
+The **AI Smart Bus Tracking and Notification System** is an enterprise-grade transit management platform designed to automate and simplify college bus operations. 
 
-The system provides a centralized platform for managing:
-
-- Buses
-- Drivers
-- Students
-- Routes
-- Bus allocations
-- Live tracking
-- Notifications
-- AI-based ETA prediction
-
-The application uses **HTML, CSS, JavaScript, Node.js, Express.js, and MySQL**.
-
-Real-time communication is supported using **Server-Sent Events (SSE)**, while authentication is implemented using **JSON Web Tokens (JWT)**.
-
-The system provides a foundation that can be extended in the future with GPS integration, advanced machine learning, traffic information, mobile applications, and other intelligent transportation features.
+It eliminates guessing for students waiting at stops by predicting exact arrival times using geodesic distance and traffic factors, while allowing bus drivers to stream real-time GPS telemetry from their smartphones without requiring expensive proprietary hardware.
 
 ---
 
-## 🎯 Objectives
+## ✨ Key Features
 
-- 🚌 Efficiently manage college transportation
-- 📍 Provide live bus tracking information
-- 🤖 Estimate bus arrival time
-- 👨‍✈️ Manage driver information
-- 🎓 Manage student transportation details
-- 🛣️ Manage routes
-- 🔄 Manage bus allocations
-- 🔔 Provide transportation notifications
-- 🆘 Provide SOS functionality
-- 📊 Provide a centralized administration dashboard
-- 🔐 Provide secure authentication
-- ⚡ Support real-time telemetry updates
+### 📱 1. Authentic Mobile Device GPS Telemetry
+- **HTML5 High-Accuracy Geolocation**: Driver Cockpit connects directly to the driver's phone/tablet GPS (`navigator.geolocation.watchPosition`).
+- Streams real-time latitude, longitude, compass heading, accuracy radius ($\pm\text{meters}$), and true speedometer speed in km/h.
+- Dual Mode: Includes both **Live Device GPS** and an **Autonomous AI Route Simulator** for testing.
+
+### 🤖 2. Advanced Multi-Factor AI ETA Engine
+Replaces simplistic distance/speed division with dynamic mathematical modeling:
+
+$$\text{ETA} = \left(\frac{D_{\text{Haversine}}}{v_{\text{effective}}}\times 60\right) \times \text{TCI} + \left(N_{\text{stops}} \times t_{\text{dwell}}\right)$$
+
+* **$D_{\text{Haversine}}$**: Geodesic spherical distance between the bus and upcoming waypoints using the Haversine formula.
+* **$\text{TCI}$**: Traffic Congestion Index (1.00x Free Flow $\ge 32\text{ km/h}$, 1.20x Moderate, 1.55x Heavy Congestion, 1.45x Signal Stopped buffer).
+* **$v_{\text{effective}}$**: Velocity filter preventing division by zero during signal stops ($\ge 20\text{ km/h}$ moving average).
+* **$t_{\text{dwell}}$**: Average stop dwell penalty ($1.5\text{ minutes}$ per intermediate scheduled stop).
+* **Confidence Rating**: Dynamic confidence score ($88\% - 98\%$) based on GPS signal recency and speed stability.
+
+### 🗺️ 3. Interactive Leaflet Fleet Radar
+- Rendered on OpenStreetMap with directional headings, pulsing radar markers, and custom waypoints.
+- **Dynamic Polyline Corridors**: Automatically renders full route paths and stop sequences for all fleet buses.
+- **Live Breadcrumb History**: Tracks and displays the exact physical path driven by the vehicle.
+- **📍 My Location Tracking**: Allows students to pinpoint their own position and calculate distance to the approaching bus.
+
+### 👥 4. Real-Time Occupancy Synchronization
+- Driver cockpit features fine-tuned passenger controls (`+1`, `+2 Board`, `-1`, `-2 Off`).
+- Updates persist directly to MySQL and broadcast live to all student and administrator dashboards.
+
+### 🎓 5. Student Proximity Geofencing & Audio Alerts
+- Automatically triggers a visual banner and browser-native audio chime when the bus is within $2.5\text{ km}$ or $\le 6\text{ minutes}$ away.
+- Dynamic boarding stop resolution for personalized countdown timers.
+
+### 🚨 6. Emergency SOS Dispatch
+- Instant distress broadcast across all monitors with visual flash and emergency synthesizer siren.
 
 ---
 
-# ✨ Key Features
-
-## 🔐 Secure Authentication
-
-- User login system
-- JWT-based authentication
-- Password hashing
-- Protected API access
-- Authentication middleware
-
-## 🚌 Bus Management
-
-- Add and manage buses
-- Maintain bus information
-- View available buses
-- Update bus details
-- Assign buses to routes
-
-## 👨‍✈️ Driver Management
-
-- Add driver information
-- Manage driver details
-- Associate drivers with buses
-- Maintain driver assignments
-
-## 🎓 Student Management
-
-- Maintain student information
-- Manage student transportation details
-- Associate students with transportation services
-
-## 🛣️ Route Management
-
-- Create and manage routes
-- Maintain route information
-- View available routes
-- Allocate buses to routes
-
-## 🔄 Bus Allocation
-
-- Assign buses to routes
-- Manage transportation assignments
-- Maintain bus-route relationships
-
-## 📍 Live Bus Tracking
-
-The live tracking module provides continuously updated bus telemetry information.
-
-Features include:
-
-- Bus tracking information
-- Real-time telemetry updates
-- Bus speed monitoring
-- Server-Sent Events (SSE)
-- Continuous tracking updates
-
-## 🤖 AI-Based ETA Prediction
-
-The system provides an estimated arrival time using available bus telemetry information.
-
-Basic ETA calculation:
+## 🏗️ System Architecture
 
 ```text
-ETA = Remaining Distance / Current Speed
-````
-
-The ETA module provides a foundation for future intelligent transportation prediction.
-
-Future versions can incorporate:
-
-* GPS data
-* Traffic conditions
-* Historical travel data
-* Weather conditions
-* Road conditions
-* Machine learning models
-
----
-
-## 🔔 Notifications
-
-The notification module provides transportation-related information and updates.
-
-It can be used for:
-
-* Bus updates
-* Route notifications
-* Transportation alerts
-* Important announcements
-
----
-
-## 🆘 SOS Support
-
-The system includes an SOS functionality for transportation-related emergency situations.
-
----
-
-## 📊 Admin Dashboard
-
-The administration dashboard provides centralized access to important transportation information such as:
-
-* Total buses
-* Total drivers
-* Total students
-* Total routes
-* Bus allocations
-* Notifications
-
----
-
-# 🏗️ System Architecture
-
-```text
-                         ┌─────────────────────┐
-                         │     User / Admin    │
-                         │     Web Browser     │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │  Frontend Interface │
-                         │   HTML / CSS / JS   │
-                         └──────────┬──────────┘
-                                    │
-                              HTTP / SSE
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │  Node.js + Express  │
-                         │     Backend API     │
-                         └──────────┬──────────┘
-                                    │
-                ┌───────────────────┼───────────────────┐
-                │                   │                   │
-                ▼                   ▼                   ▼
-        ┌──────────────┐    ┌───────────────┐   ┌────────────────┐
-        │Authentication│    │ ETA Prediction│   │ Live Tracking  │
-        │ & Security   │    │    Engine     │   │& Notifications │
-        └──────────────┘    └───────────────┘   └────────────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    MySQL Database   │
-                         └─────────────────────┘
+ ┌──────────────────────┐        ┌──────────────────────┐        ┌──────────────────────┐
+ │   Student Portal     │        │    Driver Cockpit    │        │   Admin Command Hub  │
+ │ (Live Map & Mini-Map)│        │ (Device GPS Stream)  │        │ (Fleet & Allocations)│
+ └──────────┬───────────┘        └──────────┬───────────┘        └──────────┬───────────┘
+            │                               │                               │
+            │ HTTP / SSE                    │ HTTP Telemetry Push           │ REST API
+            ▼                               ▼                               ▼
+ ┌──────────────────────────────────────────────────────────────────────────────────────┐
+ │                              Node.js / Express Backend Server                        │
+ │  ┌───────────────────────┐  ┌───────────────────────┐  ┌──────────────────────────┐  │
+ │  │ Telemetry Controller  │  │   AI ETA Predictor    │  │ Server-Sent Events (SSE) │  │
+ │  └───────────────────────┘  └───────────────────────┘  └──────────────────────────┘  │
+ └──────────────────────────────────────────┬───────────────────────────────────────────┘
+                                            │
+                                            ▼
+                               ┌─────────────────────────┐
+                               │     MySQL Database      │
+                               │  (8 Tables + Seed Data) │
+                               └─────────────────────────┘
 ```
 
 ---
 
-# 🧩 System Modules
+## 🔑 Default Portal Credentials
 
-| Module                  | Description                               |
-| ----------------------- | ----------------------------------------- |
-| 🔐 Authentication       | Secure login and user authentication      |
-| 🚌 Bus Management       | Add, update, and manage buses             |
-| 👨‍✈️ Driver Management | Manage driver information and assignments |
-| 🎓 Student Management   | Manage student transportation details     |
-| 🛣️ Route Management    | Create and manage transportation routes   |
-| 🔄 Bus Allocation       | Allocate buses to routes                  |
-| 📍 Live Tracking        | Monitor real-time bus telemetry           |
-| 🤖 AI ETA Prediction    | Estimate bus arrival time                 |
-| 🔔 Notifications        | Send transportation-related updates       |
-| 🆘 SOS                  | Support transportation emergency alerts   |
-| 📊 Admin Dashboard      | Centralized transportation management     |
+| Role | Email | Password | Access Portal |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@smartbus.com` | `admin123` | `adminDashboard.html` |
+| **Bus Driver** | `rajesh.driver@smartbus.com` | `driver123` | `driver.html` |
+| **Student** | `kanika@smartbus.com` | `student123` | `dashboard.html` |
+
+*(Pre-filled 1-click credential buttons are available on `login.html`).*
 
 ---
 
-# 🛠️ Technology Stack
+## 🚀 Quick Setup & Installation
 
-## Frontend
-
-* HTML5
-* CSS3
-* JavaScript
-
-## Backend
-
-* Node.js
-* Express.js
-
-## Database
-
-* MySQL
-
-## Real-Time Communication
-
-* Server-Sent Events (SSE)
-
-## Authentication & Security
-
-* JSON Web Tokens (JWT)
-* Password Hashing
-
-## Development Tools
-
-* Visual Studio Code
-* MySQL Workbench
-* XAMPP
-* Postman
-* Git
-* GitHub
-
----
-
-# 📁 Project Structure
-
-```text
-AI_SmartBus_Tracking_System/
-│
-├── 01_Documentation/
-│
-├── 02_Database/
-│
-├── 03_Frontend/
-│
-├── 07_Backend/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── server.js
-│   └── test_endpoints.js
-│
-├── .gitignore
-├── package-lock.json
-└── README.md
-```
-
-> `node_modules/` and `.env` are excluded from the GitHub repository.
-
----
-
-# ⚙️ Installation and Setup
-
-## 1. Clone the Repository
-
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/kanikakandasamy/AI-SmartBus-Tracking-System.git
-```
-
-Navigate to the project:
-
-```bash
 cd AI-SmartBus-Tracking-System
 ```
 
----
-
-## 2. Install Backend Dependencies
-
-Navigate to the backend:
-
+### 2. Install Dependencies
 ```bash
 cd 07_Backend
-```
-
-Install the required dependencies:
-
-```bash
 npm install
+cd ..
 ```
 
----
-
-## 3. Configure Environment Variables
-
-Create a `.env` file inside the `07_Backend` folder.
-
+### 3. Configure Database Credentials
+Create a `.env` file (copied from `.env.example`):
 ```env
 DB_HOST=localhost
-DB_USER=your_mysql_username
+DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=ai_smart_bus
 DB_PORT=3306
 
-JWT_SECRET=your_secure_secret_key
-
+JWT_SECRET=smartbus_secret_key
 PORT=5002
 ```
 
-> **Important:** Do not upload `.env` files or database credentials to GitHub.
-
----
-
-## 4. Configure MySQL Database
-
-Create the database:
-
-```sql
-CREATE DATABASE ai_smart_bus;
+### 4. Initialize Database & Seed Data
+```bash
+node 07_Backend/config/initDb.js
 ```
 
-Select the database:
-
-```sql
-USE ai_smart_bus;
-```
-
-Use the SQL files available in:
-
-```text
-02_Database/
-```
-
-Make sure the MySQL server is running before starting the backend.
-
----
-
-## 5. Start the Backend Server
-
-From the `07_Backend` directory:
-
+### 5. Launch the Application
+On Windows, simply double-click **`start_system.bat`** or run:
 ```bash
 npm start
 ```
 
-The backend server runs on:
-
-```text
-http://localhost:5002
-```
-
-The web application can be accessed through:
-
-```text
-http://localhost:5002/index.html
-```
+Access the application in your browser:
+👉 **`http://localhost:5002`**
 
 ---
 
-# 🔗 API Services
+## 📱 Mobile Device GPS Access (Same Wi-Fi)
 
-The backend provides API endpoints for different modules.
+To stream authentic GPS telemetry from a smartphone:
+1. Connect your phone and laptop to the same Wi-Fi network (or laptop hotspot).
+2. Open the mobile network URL shown on the server terminal:
+   `http://<YOUR_LAN_IP>:5002/driver.html`
+3. Tap **`📱 Start Live Phone GPS`** and grant location permissions.
+4. Watch the vehicle marker travel in real time on your desktop radar at `http://localhost:5002/tracking.html`!
 
-Examples include:
+---
 
-```text
-/api/auth
-/api/buses
-/api/drivers
-/api/students
-/api/routes
-/api/allocations
-/api/tracking
-/api/notifications
-/api/eta
+## 🧪 Automated Test Suite
+
+Run the comprehensive 18-point API, database, and telemetry test suite:
+```bash
+npm test
 ```
 
 ---
 
-## 📡 Live Telemetry Stream
+## 👩‍💻 Developer
 
-The system supports real-time telemetry using Server-Sent Events (SSE).
-
-```text
-/api/tracking/stream
-```
-
----
-
-## 🤖 AI ETA Service
-
-The ETA functionality is available through:
-
-```text
-/api/eta
-```
+**Kanika K**  
+B.Tech in Artificial Intelligence and Data Science  
+*V.S.B. Engineering College, Karur*  
+GitHub: [@kanikakandasamy](https://github.com/kanikakandasamy)
 
 ---
 
-# 🔐 Security
-
-The system includes security mechanisms such as:
-
-* JWT-based authentication
-* Password hashing
-* Protected API routes
-* Authentication middleware
-* Environment variable configuration
-* `.env` exclusion through `.gitignore`
-
-Sensitive credentials should never be committed to the GitHub repository.
-
----
-
-# 🚀 Future Enhancements
-
-The system can be further enhanced with advanced transportation technologies.
-
-Possible future enhancements include:
-
-* 🗺️ Google Maps integration
-* 📡 GPS-based live bus tracking
-* 📱 Android and iOS mobile applications
-* 🔔 Push notifications
-* 🤖 Advanced machine learning-based ETA prediction
-* 🚦 Traffic-aware ETA prediction
-* 🌦️ Weather-based prediction
-* 📊 Transportation analytics and reports
-* 🚌 Multiple vehicle tracking
-* 🎫 QR-based student attendance
-* ☁️ Cloud deployment
-* 📈 Historical travel analysis
-
----
-
-# 🌐 Deployment
-
-The application can be deployed using cloud hosting platforms.
-
-The general deployment architecture is:
-
-```text
-                    ┌───────────────────┐
-                    │    User Browser   │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │   Cloud Server    │
-                    │ Node.js + Express │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │    Cloud MySQL    │
-                    └───────────────────┘
-```
-
-The frontend and backend can communicate through the same application origin, making the application suitable for cloud deployment.
-
----
-
----
-
-# 📌 Project Highlights
-
-* 🚍 College transportation management
-* 📍 Live bus tracking support
-* 🤖 AI-based ETA prediction
-* 🔔 Transportation notification system
-* 🆘 SOS functionality
-* 🔐 JWT authentication
-* ⚡ Server-Sent Events for real-time updates
-* 🗄️ MySQL database integration
-* 📊 Centralized admin dashboard
-* 🌐 Cloud deployment ready
-* 📈 Extensible architecture for future GPS and ML integration
-
----
-
-# 👩‍💻 Developer
-
-**Kanika K**
-
-B.Tech in Artificial Intelligence and Data Science
-V.S.B. Engineering College, Karur
-
-GitHub:
-[https://github.com/kanikakandasamy](https://github.com/kanikakandasamy)
-
----
-
-# 📄 License
-
-This project is developed for educational and academic purposes.
-
-```
-```
+## 📄 License
+This project is licensed under the MIT License.
